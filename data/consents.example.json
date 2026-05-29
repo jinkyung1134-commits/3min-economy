@@ -1,0 +1,12 @@
+[
+  {
+    "subscriber_id": "customer_001",
+    "privacy_terms_agreed": true,
+    "service_terms_agreed": true,
+    "marketing_opt_in": true,
+    "kakao_message_opt_in": true,
+    "agreed_at": "2026-05-30T07:00:00+09:00",
+    "source": "kakao_channel",
+    "withdrawn_at": null
+  }
+]
