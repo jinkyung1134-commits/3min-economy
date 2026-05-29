@@ -51,15 +51,17 @@ site/index.html
 site/latest.json
 ```
 
-`site/index.html`은 최신 브리핑, 기사 링크, 영향 설명, 경제 용어 버튼 2개를 포함합니다. GitHub Pages, Netlify, Vercel 같은 정적 호스팅에 올리면 인터넷 페이지로 운영할 수 있습니다.
+`site/index.html`은 최신 기사 링크, 영향 설명, 기사별 쉬운 경제 용어 설명을 포함합니다. GitHub Pages, Netlify, Vercel 같은 정적 호스팅에 올리면 인터넷 페이지로 운영할 수 있습니다.
 
 ## GitHub Pages 자동 발행
 
-`.github/workflows/pages.yml`은 매일 오전 7시(한국 시간)에 다음 작업을 실행합니다.
+`.github/workflows/pages.yml`은 사이트를 약 15분마다 갱신합니다. GitHub Pages는 정적 호스팅이라 초 단위 실시간은 아니지만, 최신 RSS를 자주 다시 가져와 준실시간 페이지로 운영할 수 있습니다.
 
 1. 경제 뉴스 RSS 수집
 2. `site/index.html`, `site/latest.json` 생성
 3. GitHub Pages로 배포
+
+카카오톡 발송은 사이트 갱신과 분리해서 오전 7시에 핵심 기사만 보내는 흐름으로 운영합니다.
 
 GitHub 저장소에 올린 뒤 `Settings > Pages > Build and deployment`에서 Source를 `GitHub Actions`로 설정하세요.
 
