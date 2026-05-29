@@ -164,27 +164,52 @@
       color: var(--muted);
       font-size: 13px;
     }
-    .item-terms {
-      margin-top: 12px;
-      display: grid;
-      gap: 8px;
-    }
-    .item-term {
-      background: #fff9e8;
-      border: 1px solid #f0dba8;
-      border-radius: 7px;
-      padding: 11px 12px;
-    }
-    .item-term strong {
-      display: block;
+    .term-tooltip {
+      position: relative;
+      display: inline-block;
       color: var(--orange);
-      font-size: 14px;
-      letter-spacing: 0;
+      border-bottom: 2px dotted rgba(168, 95, 0, 0.65);
+      cursor: help;
     }
-    .item-term p {
-      margin: 4px 0 0;
-      color: #3f4247;
+    .term-tooltip::after {
+      content: attr(data-definition);
+      position: absolute;
+      left: 50%;
+      bottom: calc(100% + 10px);
+      transform: translateX(-50%);
+      width: min(280px, 80vw);
+      padding: 11px 12px;
+      border-radius: 8px;
+      background: #1f2328;
+      color: #fff;
       font-size: 14px;
+      font-weight: 500;
+      line-height: 1.45;
+      box-shadow: 0 12px 30px rgba(31, 35, 40, 0.2);
+      opacity: 0;
+      pointer-events: none;
+      visibility: hidden;
+      z-index: 10;
+    }
+    .term-tooltip::before {
+      content: "";
+      position: absolute;
+      left: 50%;
+      bottom: calc(100% + 3px);
+      transform: translateX(-50%);
+      border: 7px solid transparent;
+      border-top-color: #1f2328;
+      opacity: 0;
+      pointer-events: none;
+      visibility: hidden;
+      z-index: 11;
+    }
+    .term-tooltip:hover::after,
+    .term-tooltip:hover::before,
+    .term-tooltip:focus::after,
+    .term-tooltip:focus::before {
+      opacity: 1;
+      visibility: visible;
     }
     .notice {
       margin-top: 20px;
@@ -214,7 +239,7 @@
           <p>뉴스는 짧게, 영향은 쉽게, 용어는 바로 이해되게</p>
         </div>
       </div>
-      <div class="update">2026-05-30 02:11 업데이트</div>
+      <div class="update">2026-05-30 02:17 업데이트</div>
     </div>
   </header>
 
@@ -231,7 +256,7 @@
           <h3>어떤 영향이 있나요?</h3>
           <p>오늘 뉴스는 시장 심리와 정책 기대에 영향을 줄 수 있어 금리, 환율, 증시 흐름을 함께 확인하는 것이 좋습니다.</p>
         </div>
-        <p class="notice">경제 용어 설명은 각 기사 아래에 붙여두었습니다.</p>
+        <p class="notice">기사 제목의 강조된 경제 용어에 마우스를 올리면 쉬운 설명이 나옵니다.</p>
       </aside>
     </section>
 
@@ -240,58 +265,32 @@
       <ol class="news-list">
         
         <li class="news-item">
-          <a href="https://news.google.com/rss/articles/CBMiakFVX3lxTE4tamFmNklSQ0tfaHVPWVRHWV9TR3dyRV9SRkZXeDIxbVNNYW1VdTJ6N3JIUlhzNW9XaGhvVTVfVUJDNmIxZ2JFMUg2OTdyMFNxYlRYYVlKcWJnc2R6dFA4ZzVOb25DZjdfQlE?oc=5" target="_blank" rel="noopener noreferrer">증시 호황에 저축은행 비이자이익 1002%↑</a>
+          <a href="https://news.google.com/rss/articles/CBMiakFVX3lxTE4tamFmNklSQ0tfaHVPWVRHWV9TR3dyRV9SRkZXeDIxbVNNYW1VdTJ6N3JIUlhzNW9XaGhvVTVfVUJDNmIxZ2JFMUg2OTdyMFNxYlRYYVlKcWJnc2R6dFA4ZzVOb25DZjdfQlE?oc=5" target="_blank" rel="noopener noreferrer"><span class="term-tooltip" tabindex="0" data-definition="주식이 거래되는 시장입니다. 기업 실적, 금리, 환율, 투자 심리에 영향을 받습니다.">증시</span> 호황에 저축은행 비이자이익 1002%↑</a>
           <span>더리브스</span>
-          <div class="item-terms" aria-label="기사 속 경제 용어">
-        <div class="item-term">
-          <strong>증시란?</strong>
-          <p>주식이 거래되는 시장입니다. 기업 실적, 금리, 환율, 투자 심리에 영향을 받습니다.</p>
-        </div>
-        </div>
         </li>
         
 
         <li class="news-item">
           <a href="https://news.google.com/rss/articles/CBMiVkFVX3lxTFBzZHFydzE0a1Rab2owUEdLeEp1bndqQ0doNzdHekRPbFNwcFdxZTkzcjN6eTNFMkVrSVJ5di1nbkYweGxVTVBLSXNnd0hkdFFEWkwwdTNR?oc=5" target="_blank" rel="noopener noreferrer">금감원, 우리금융·동양생명 주식교환 &#x27;제동&#x27;</a>
           <span>DealSite경제TV</span>
-          
         </li>
         
 
         <li class="news-item">
-          <a href="https://news.google.com/rss/articles/CBMickFVX3lxTE93YXJvVDlkdnZmbnBuNkNjZ3JWT1dQa3M3aWRPQ1ZTaElGVzRlS2NwSDdUVHdjTmxOaEV5ZXlMWlRyZnhNSkJRQUQwY3JMdlRXRndvYzZGQlE3ZjdfaGR4aVBrMzVJUnhNeGU2alpGbndqZw?oc=5" target="_blank" rel="noopener noreferrer">증시 활황에 판 뒤집힌 금융권…증권사, 은행 턱밑 추격</a>
+          <a href="https://news.google.com/rss/articles/CBMickFVX3lxTE93YXJvVDlkdnZmbnBuNkNjZ3JWT1dQa3M3aWRPQ1ZTaElGVzRlS2NwSDdUVHdjTmxOaEV5ZXlMWlRyZnhNSkJRQUQwY3JMdlRXRndvYzZGQlE3ZjdfaGR4aVBrMzVJUnhNeGU2alpGbndqZw?oc=5" target="_blank" rel="noopener noreferrer"><span class="term-tooltip" tabindex="0" data-definition="주식이 거래되는 시장입니다. 기업 실적, 금리, 환율, 투자 심리에 영향을 받습니다.">증시</span> 활황에 판 뒤집힌 금융권…증권사, 은행 턱밑 추격</a>
           <span>인더스트리뉴스</span>
-          <div class="item-terms" aria-label="기사 속 경제 용어">
-        <div class="item-term">
-          <strong>증시란?</strong>
-          <p>주식이 거래되는 시장입니다. 기업 실적, 금리, 환율, 투자 심리에 영향을 받습니다.</p>
-        </div>
-        </div>
         </li>
         
 
         <li class="news-item">
-          <a href="https://news.google.com/rss/articles/CBMiVkFVX3lxTE1wb0xFUU9zZ2hWYW84U3poMFdGQ2pqeTVzWFpDWERmZFlyVDhRRGNia0lCbld3Ml9HQVRCTWkwaTZpOWgzX3VQQS1DRGJsQnZTaUotN2p3?oc=5" target="_blank" rel="noopener noreferrer">증시 ‘팔천피’ 질주에도 채권·원화가격 왜 폭락? [홍길용의 화식열전]</a>
+          <a href="https://news.google.com/rss/articles/CBMiVkFVX3lxTE1wb0xFUU9zZ2hWYW84U3poMFdGQ2pqeTVzWFpDWERmZFlyVDhRRGNia0lCbld3Ml9HQVRCTWkwaTZpOWgzX3VQQS1DRGJsQnZTaUotN2p3?oc=5" target="_blank" rel="noopener noreferrer"><span class="term-tooltip" tabindex="0" data-definition="주식이 거래되는 시장입니다. 기업 실적, 금리, 환율, 투자 심리에 영향을 받습니다.">증시</span> ‘팔천피’ 질주에도 <span class="term-tooltip" tabindex="0" data-definition="정부나 회사가 돈을 빌리기 위해 발행하는 증서입니다. 금리 변화에 민감합니다.">채권</span>·원화가격 왜 폭락? [홍길용의 화식열전]</a>
           <span>헤럴드경제</span>
-          <div class="item-terms" aria-label="기사 속 경제 용어">
-        <div class="item-term">
-          <strong>증시란?</strong>
-          <p>주식이 거래되는 시장입니다. 기업 실적, 금리, 환율, 투자 심리에 영향을 받습니다.</p>
-        </div>
-        
-
-        <div class="item-term">
-          <strong>채권이란?</strong>
-          <p>정부나 회사가 돈을 빌리기 위해 발행하는 증서입니다. 금리 변화에 민감합니다.</p>
-        </div>
-        </div>
         </li>
         
 
         <li class="news-item">
           <a href="https://news.google.com/rss/articles/CBMiW0FVX3lxTFBSYzJXdkhjc2E5MmpuV0x1UFdfU21MSGl5TVM5aUY5NzI0Z3JIUmZRcnNTMDdpaGxZbjZ1WFNJQThva0x0R0V5aHgtcWhXb3hOajEzQTZNNE5MUkE?oc=5" target="_blank" rel="noopener noreferrer">주식시장에 &#x27;나만 아는 꿀정보&#x27;는 없다? 경제학자의 뼈 때리는 팩폭 [수능에 나오는 경제·금융]</a>
           <span>생글생글</span>
-          
         </li>
         
       </ol>
