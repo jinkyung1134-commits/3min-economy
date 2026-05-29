@@ -165,6 +165,30 @@ class BusinessWebhookSender:
         http_post_json(self.webhook_url, payload, headers)
 
 
+class BusinessBroadcastWebhookSender:
+    def __init__(self, webhook_url: str, api_key: str) -> None:
+        if not webhook_url:
+            raise SystemExit("BUSINESS_MESSAGE_WEBHOOK_URL is required when SENDER_MODE=business_broadcast_webhook.")
+        self.webhook_url = webhook_url
+        self.api_key = api_key
+
+    def send_broadcast(self, text: str, link: str) -> None:
+        payload = {
+            "audience": {
+                "type": "kakao_channel_friends",
+            },
+            "message": {
+                "text": text[:1000],
+                "link": link,
+                "type": "economic_news_digest",
+            },
+        }
+        headers = {"Content-Type": "application/json;charset=utf-8"}
+        if self.api_key:
+            headers["Authorization"] = f"Bearer {self.api_key}"
+        http_post_json(self.webhook_url, payload, headers)
+
+
 def load_dotenv(path: Path = Path(".env")) -> None:
     if not path.exists():
         return
@@ -270,6 +294,15 @@ def build_sender(settings: Settings) -> MessageSender:
             api_key=settings.business_message_api_key,
         )
     raise SystemExit(f"Unsupported SENDER_MODE: {settings.sender_mode}")
+
+
+def build_broadcast_sender(settings: Settings) -> BusinessBroadcastWebhookSender:
+    if settings.sender_mode != "business_broadcast_webhook":
+        raise SystemExit(f"Unsupported broadcast SENDER_MODE: {settings.sender_mode}")
+    return BusinessBroadcastWebhookSender(
+        webhook_url=settings.business_message_webhook_url,
+        api_key=settings.business_message_api_key,
+    )
 
 
 def parse_rss(xml_text: str, fallback_source: str) -> list[NewsItem]:
@@ -842,6 +875,16 @@ def render_title_with_term_tooltips(title: str, terms: list[dict[str, str]]) -> 
 
 
 def run_once(settings: Settings) -> None:
+    if settings.sender_mode == "business_broadcast_webhook":
+        selected = fetch_news(settings)[: settings.max_news_items]
+        if not selected:
+            print("No news items to send.")
+            return
+        text, link = build_digest(selected)
+        build_broadcast_sender(settings).send_broadcast(text, link)
+        print(f"Sent broadcast digest with {len(selected)} news items.")
+        return
+
     subscribers = active_subscribers(load_subscribers(settings.subscribers_file))
     if not subscribers:
         print("No active subscribers. Check SUBSCRIBERS_FILE.")
