@@ -23,7 +23,13 @@ DEFAULT_NEWS_RSS_FEEDS = (
     "https://news.google.com/rss/search?"
     "q=%EA%B2%BD%EC%A0%9C%20%EA%B8%88%EC%9C%B5%20%EC%A6%9D%EC%8B%9C&hl=ko&gl=KR&ceid=KR:ko,"
     "https://news.google.com/rss/search?"
-    "q=%EA%B8%88%EB%A6%AC%20%ED%99%98%EC%9C%A8%20%EB%AC%BC%EA%B0%80&hl=ko&gl=KR&ceid=KR:ko"
+    "q=%EA%B8%88%EB%A6%AC%20%ED%99%98%EC%9C%A8%20%EB%AC%BC%EA%B0%80&hl=ko&gl=KR&ceid=KR:ko,"
+    "https://news.google.com/rss/search?"
+    "q=%EB%B6%80%EB%8F%99%EC%82%B0%20%EA%B2%BD%EC%A0%9C%20%EC%A0%95%EC%B1%85&hl=ko&gl=KR&ceid=KR:ko,"
+    "https://news.google.com/rss/search?"
+    "q=%EB%B0%98%EB%8F%84%EC%B2%B4%20AI%20%EA%B8%B0%EC%97%85%20%EC%8B%A4%EC%A0%81&hl=ko&gl=KR&ceid=KR:ko,"
+    "https://news.google.com/rss/search?"
+    "q=%EB%AF%B8%EA%B5%AD%20%EC%A6%9D%EC%8B%9C%20%EA%B8%88%EB%A6%AC%20%ED%99%98%EC%9C%A8&hl=ko&gl=KR&ceid=KR:ko"
 )
 
 TERM_DEFINITIONS = {
@@ -136,7 +142,7 @@ def get_settings() -> Settings:
         business_message_api_key=os.getenv("BUSINESS_MESSAGE_API_KEY", ""),
         news_keywords=split_csv(os.getenv("NEWS_KEYWORDS", DEFAULT_NEWS_KEYWORDS)),
         news_rss_feeds=split_csv(os.getenv("NEWS_RSS_FEEDS", DEFAULT_NEWS_RSS_FEEDS)),
-        max_news_items=int(os.getenv("MAX_NEWS_ITEMS", "5")),
+        max_news_items=int(os.getenv("MAX_NEWS_ITEMS", "10")),
         subscribers_file=Path(os.getenv("SUBSCRIBERS_FILE", "data/subscribers.json")),
         sent_file=Path(os.getenv("SENT_FILE", ".state/sent_items.json")),
         briefing_output_file=Path(os.getenv("BRIEFING_OUTPUT_FILE", "output/kakao_briefing.txt")),
@@ -253,7 +259,7 @@ def fetch_news(settings: Settings) -> list[NewsItem]:
             print(f"RSS fetch failed: {feed_url} ({error})", file=sys.stderr)
 
     filtered = filter_recent_news(all_items, settings.max_news_age_hours)
-    return dedupe_news(filter_news(filtered, settings.news_keywords))
+    return sort_news_by_published(dedupe_news(filter_news(filtered, settings.news_keywords)))
 
 
 def filter_news(items: list[NewsItem], keywords: list[str]) -> list[NewsItem]:
@@ -295,6 +301,14 @@ def filter_recent_news(items: list[NewsItem], max_age_hours: int) -> list[NewsIt
             recent.append(item)
 
     return recent or unknown_date
+
+
+def sort_news_by_published(items: list[NewsItem]) -> list[NewsItem]:
+    return sorted(
+        items,
+        key=lambda item: parse_datetime(item.published) or dt.datetime.min.replace(tzinfo=dt.timezone.utc),
+        reverse=True,
+    )
 
 
 def extract_terms_from_text(text: str, limit: int = 2) -> list[dict[str, str]]:
@@ -598,21 +612,22 @@ def render_site_html(data: dict[str, Any]) -> str:
       color: var(--muted);
       font-size: 13px;
     }}
-    .term-tooltip {{
+    .term-highlight {{
       position: relative;
-      display: inline-block;
+      display: inline;
       color: var(--orange);
-      border-bottom: 2px dotted rgba(168, 95, 0, 0.65);
+      border-bottom: 1px dotted rgba(168, 95, 0, 0.8);
       cursor: help;
-      outline: none;
+      font: inherit;
     }}
-    .term-tooltip::after {{
-      content: attr(data-definition);
-      position: absolute;
-      left: 50%;
-      bottom: calc(100% + 10px);
-      transform: translateX(-50%);
-      width: min(320px, 82vw);
+    .notice {{
+      margin-top: 20px;
+      color: var(--muted);
+      font-size: 13px;
+    }}
+    .floating-tooltip {{
+      position: fixed;
+      max-width: min(340px, calc(100vw - 28px));
       padding: 11px 12px;
       border-radius: 8px;
       background: #1f2328;
@@ -620,36 +635,16 @@ def render_site_html(data: dict[str, Any]) -> str:
       font-size: 14px;
       font-weight: 500;
       line-height: 1.45;
-      box-shadow: 0 12px 30px rgba(31, 35, 40, 0.2);
+      box-shadow: 0 12px 30px rgba(31, 35, 40, 0.22);
       opacity: 0;
       pointer-events: none;
-      visibility: hidden;
-      z-index: 10;
+      transform: translateY(4px);
+      transition: opacity 120ms ease, transform 120ms ease;
+      z-index: 100;
     }}
-    .term-tooltip::before {{
-      content: "";
-      position: absolute;
-      left: 50%;
-      bottom: calc(100% + 3px);
-      transform: translateX(-50%);
-      border: 7px solid transparent;
-      border-top-color: #1f2328;
-      opacity: 0;
-      pointer-events: none;
-      visibility: hidden;
-      z-index: 11;
-    }}
-    .term-tooltip:hover::after,
-    .term-tooltip:hover::before,
-    .term-tooltip:focus::after,
-    .term-tooltip:focus::before {{
+    .floating-tooltip.is-visible {{
       opacity: 1;
-      visibility: visible;
-    }}
-    .notice {{
-      margin-top: 20px;
-      color: var(--muted);
-      font-size: 13px;
+      transform: translateY(0);
     }}
     @media (max-width: 760px) {{
       .brand {{
@@ -704,6 +699,45 @@ def render_site_html(data: dict[str, Any]) -> str:
 
     <p class="notice">기사 본문을 복제하지 않고, 공개된 제목과 링크를 바탕으로 경제 흐름을 쉽게 설명합니다.</p>
   </main>
+  <div class="floating-tooltip" id="term-tooltip" role="tooltip"></div>
+  <script>
+    const tooltip = document.getElementById("term-tooltip");
+    const terms = document.querySelectorAll(".term-highlight");
+
+    function showTooltip(event) {{
+      const target = event.currentTarget;
+      tooltip.textContent = target.dataset.definition || "";
+      tooltip.classList.add("is-visible");
+      positionTooltip(target);
+    }}
+
+    function hideTooltip() {{
+      tooltip.classList.remove("is-visible");
+    }}
+
+    function positionTooltip(target) {{
+      const rect = target.getBoundingClientRect();
+      const margin = 12;
+      const tooltipRect = tooltip.getBoundingClientRect();
+      let left = rect.left + rect.width / 2 - tooltipRect.width / 2;
+      left = Math.max(margin, Math.min(left, window.innerWidth - tooltipRect.width - margin));
+      let top = rect.top - tooltipRect.height - 10;
+      if (top < margin) {{
+        top = rect.bottom + 10;
+      }}
+      tooltip.style.left = `${{left}}px`;
+      tooltip.style.top = `${{top}}px`;
+    }}
+
+    terms.forEach((term) => {{
+      term.addEventListener("mouseenter", showTooltip);
+      term.addEventListener("mouseleave", hideTooltip);
+      term.addEventListener("focus", showTooltip);
+      term.addEventListener("blur", hideTooltip);
+      term.addEventListener("touchstart", showTooltip, {{ passive: true }});
+    }});
+    window.addEventListener("scroll", hideTooltip, {{ passive: true }});
+  </script>
 </body>
 </html>
 """
@@ -727,7 +761,7 @@ def render_title_with_term_tooltips(title: str, terms: list[dict[str, str]]) -> 
             continue
         pieces.append(escape(title[cursor:start]))
         pieces.append(
-            '<span class="term-tooltip" tabindex="0" '
+            '<span class="term-highlight" tabindex="0" '
             f'data-definition="{escape(term["definition"])}">'
             f'{escape(title[start:end])}</span>'
         )
