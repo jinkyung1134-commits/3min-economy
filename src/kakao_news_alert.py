@@ -673,6 +673,24 @@ def render_site_html(data: dict[str, Any]) -> str:
       color: var(--muted);
       font-size: 13px;
     }}
+    .policy {{
+      margin-top: 26px;
+      padding: 16px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      color: #4a4f58;
+      font-size: 13px;
+    }}
+    .policy strong {{
+      display: block;
+      margin-bottom: 7px;
+      color: var(--ink);
+      font-size: 14px;
+    }}
+    .policy p {{
+      margin: 6px 0 0;
+    }}
     .floating-tooltip {{
       position: fixed;
       max-width: min(340px, calc(100vw - 28px));
@@ -745,7 +763,12 @@ def render_site_html(data: dict[str, Any]) -> str:
       </ol>
     </section>
 
-    <p class="notice">기사 본문을 복제하지 않고, 공개된 제목과 링크를 바탕으로 경제 흐름을 쉽게 설명합니다.</p>
+    <section class="policy" aria-label="서비스 운영 원칙">
+      <strong>3분경제 운영 원칙</strong>
+      <p>기사 본문, 사진, 그래프를 복제하지 않고 공개된 기사 제목과 원문 링크를 바탕으로 경제 흐름과 용어를 쉽게 설명합니다.</p>
+      <p>3분경제는 투자 자문이나 종목 추천을 제공하지 않습니다. 투자 판단과 책임은 이용자 본인에게 있습니다.</p>
+      <p>원문 확인이 필요한 내용은 각 기사 링크를 통해 해당 언론사 페이지에서 확인해주세요.</p>
+    </section>
   </main>
   <div class="floating-tooltip" id="term-tooltip" role="tooltip"></div>
   <script>
