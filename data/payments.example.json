@@ -1,0 +1,13 @@
+[
+  {
+    "subscriber_id": "customer_001",
+    "plan": "premium_monthly",
+    "provider": "pending",
+    "status": "paid",
+    "amount_krw": 4900,
+    "paid_at": "2026-05-30T07:00:00+09:00",
+    "next_billing_at": "2026-06-30T07:00:00+09:00",
+    "cancelled_at": null,
+    "refunded_at": null
+  }
+]
