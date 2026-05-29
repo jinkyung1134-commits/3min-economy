@@ -402,9 +402,8 @@ def render_site_html(data: dict[str, Any]) -> str:
     news_items = "\n".join(
         f"""
         <li class="news-item">
-          <a href="{escape(item['link'])}" target="_blank" rel="noopener noreferrer">{escape(clean_title(item['title']))}</a>
+          <a href="{escape(item['link'])}" target="_blank" rel="noopener noreferrer">{render_title_with_tooltips(clean_title(item['title']), item.get('terms') or [])}</a>
           <span>{escape(item['source'])}</span>
-          {render_item_terms(item)}
         </li>
         """
         for item in data["items"]
@@ -575,27 +574,52 @@ def render_site_html(data: dict[str, Any]) -> str:
       color: var(--muted);
       font-size: 13px;
     }}
-    .item-terms {{
-      margin-top: 12px;
-      display: grid;
-      gap: 8px;
-    }}
-    .item-term {{
-      background: #fff9e8;
-      border: 1px solid #f0dba8;
-      border-radius: 7px;
-      padding: 11px 12px;
-    }}
-    .item-term strong {{
-      display: block;
+    .term-tooltip {{
+      position: relative;
+      display: inline-block;
       color: var(--orange);
-      font-size: 14px;
-      letter-spacing: 0;
+      border-bottom: 2px dotted rgba(168, 95, 0, 0.65);
+      cursor: help;
     }}
-    .item-term p {{
-      margin: 4px 0 0;
-      color: #3f4247;
+    .term-tooltip::after {{
+      content: attr(data-definition);
+      position: absolute;
+      left: 50%;
+      bottom: calc(100% + 10px);
+      transform: translateX(-50%);
+      width: min(280px, 80vw);
+      padding: 11px 12px;
+      border-radius: 8px;
+      background: #1f2328;
+      color: #fff;
       font-size: 14px;
+      font-weight: 500;
+      line-height: 1.45;
+      box-shadow: 0 12px 30px rgba(31, 35, 40, 0.2);
+      opacity: 0;
+      pointer-events: none;
+      visibility: hidden;
+      z-index: 10;
+    }}
+    .term-tooltip::before {{
+      content: "";
+      position: absolute;
+      left: 50%;
+      bottom: calc(100% + 3px);
+      transform: translateX(-50%);
+      border: 7px solid transparent;
+      border-top-color: #1f2328;
+      opacity: 0;
+      pointer-events: none;
+      visibility: hidden;
+      z-index: 11;
+    }}
+    .term-tooltip:hover::after,
+    .term-tooltip:hover::before,
+    .term-tooltip:focus::after,
+    .term-tooltip:focus::before {{
+      opacity: 1;
+      visibility: visible;
     }}
     .notice {{
       margin-top: 20px;
@@ -642,7 +666,7 @@ def render_site_html(data: dict[str, Any]) -> str:
           <h3>어떤 영향이 있나요?</h3>
           <p>{escape(data['impact'])}</p>
         </div>
-        <p class="notice">경제 용어 설명은 각 기사 아래에 붙여두었습니다.</p>
+        <p class="notice">기사 제목의 강조된 경제 용어에 마우스를 올리면 쉬운 설명이 나옵니다.</p>
       </aside>
     </section>
 
@@ -660,20 +684,31 @@ def render_site_html(data: dict[str, Any]) -> str:
 """
 
 
-def render_item_terms(item: dict[str, Any]) -> str:
-    terms = item.get("terms") or []
+def render_title_with_tooltips(title: str, terms: list[dict[str, str]]) -> str:
     if not terms:
-        return ""
-    rows = "\n".join(
-        f"""
-        <div class="item-term">
-          <strong>{escape(term_question(term['term']))}</strong>
-          <p>{escape(term['definition'])}</p>
-        </div>
-        """
-        for term in terms
-    )
-    return f'<div class="item-terms" aria-label="기사 속 경제 용어">{rows}</div>'
+        return escape(title)
+
+    pieces: list[str] = []
+    cursor = 0
+    matches: list[tuple[int, int, dict[str, str]]] = []
+    for term in terms:
+        start = title.find(term["term"])
+        if start >= 0:
+            matches.append((start, start + len(term["term"]), term))
+    matches.sort(key=lambda row: row[0])
+
+    for start, end, term in matches:
+        if start < cursor:
+            continue
+        pieces.append(escape(title[cursor:start]))
+        pieces.append(
+            '<span class="term-tooltip" tabindex="0" '
+            f'data-definition="{escape(term["definition"])}">'
+            f'{escape(title[start:end])}</span>'
+        )
+        cursor = end
+    pieces.append(escape(title[cursor:]))
+    return "".join(pieces)
 
 
 def run_once(settings: Settings) -> None:
