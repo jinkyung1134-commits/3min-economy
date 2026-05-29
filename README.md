@@ -61,6 +61,26 @@ site/latest.json
 - 투자 판단과 책임은 이용자 본인에게 있다는 문구를 사이트와 카카오톡 브리핑에 포함합니다.
 - 수익화 전에는 개인정보 처리방침, 이용약관, 환불/해지 정책, 광고성 정보 수신동의 절차를 준비합니다.
 
+## 유료 구독 준비 파일
+
+사이트 문서:
+
+- `site/pricing.html`: 무료/프리미엄 구독 안내
+- `site/legal/terms.html`: 이용약관 초안
+- `site/legal/privacy.html`: 개인정보 처리방침 초안
+- `site/legal/refund.html`: 환불 및 해지 정책 초안
+- `site/legal/marketing-consent.html`: 광고성 정보 수신동의 초안
+- `site/legal/checklist.html`: 유료화 체크리스트
+
+운영 데이터 예시:
+
+- `data/plans.example.json`: 무료/프리미엄 플랜 구조
+- `data/subscribers.example.json`: 구독자 데이터 구조
+- `data/consents.example.json`: 약관/개인정보/마케팅 수신동의 로그
+- `data/payments.example.json`: 결제/갱신/취소/환불 로그 구조
+
+아직 결제대행사와 카카오 비즈메시지 발송 솔루션은 연결하지 않았습니다. 실제 유료화 전에는 사업자등록, 결제대행사 계약, 비즈니스 채널 인증, 비즈메시지 발송 방식 결정이 필요합니다.
+
 ## GitHub Pages 자동 발행
 
 `.github/workflows/pages.yml`은 사이트를 약 15분마다 갱신합니다. GitHub Pages는 정적 호스팅이라 초 단위 실시간은 아니지만, 최신 RSS를 자주 다시 가져와 준실시간 페이지로 운영할 수 있습니다.
