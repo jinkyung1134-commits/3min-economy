@@ -1,0 +1,25 @@
+[
+  {
+    "id": "free",
+    "name": "무료",
+    "price_krw": 0,
+    "billing_cycle": "none",
+    "features": [
+      "실시간 경제 기사 페이지",
+      "기사 속 경제 용어 설명",
+      "카카오톡 채널 기본 브리핑"
+    ]
+  },
+  {
+    "id": "premium_monthly",
+    "name": "프리미엄 월 구독",
+    "price_krw": 4900,
+    "billing_cycle": "monthly",
+    "features": [
+      "오전 7시 핵심 기사 카카오톡 브리핑",
+      "오늘의 시장 영향 3줄 해설",
+      "관심 분야별 브리핑",
+      "주간 경제 흐름 정리"
+    ]
+  }
+]
