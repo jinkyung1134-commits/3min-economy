@@ -1,0 +1,676 @@
+from __future__ import annotations
+
+import argparse
+import datetime as dt
+import html
+import json
+import os
+import re
+import shutil
+import sys
+import urllib.error
+import urllib.parse
+import urllib.request
+import xml.etree.ElementTree as ET
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Any, Protocol
+
+
+DEFAULT_NEWS_KEYWORDS = "경제,증시,금리,환율,물가,부동산,반도체,AI,미국,중국"
+DEFAULT_NEWS_RSS_FEEDS = (
+    "https://news.google.com/rss/search?"
+    "q=%EA%B2%BD%EC%A0%9C%20%EA%B8%88%EC%9C%B5%20%EC%A6%9D%EC%8B%9C&hl=ko&gl=KR&ceid=KR:ko,"
+    "https://news.google.com/rss/search?"
+    "q=%EA%B8%88%EB%A6%AC%20%ED%99%98%EC%9C%A8%20%EB%AC%BC%EA%B0%80&hl=ko&gl=KR&ceid=KR:ko"
+)
+
+TERM_DEFINITIONS = {
+    "인플레이션": "물건과 서비스 가격이 전반적으로 오르는 현상입니다. 같은 돈으로 살 수 있는 양이 줄어드는 상태라고 보면 쉽습니다.",
+    "긴축": "중앙은행이나 정부가 금리를 올리거나 돈의 흐름을 줄여 물가와 과열된 경기를 잡으려는 정책입니다.",
+    "금리": "돈을 빌릴 때 내는 비용입니다. 금리가 오르면 대출 부담이 커지고 소비와 투자가 줄어들 수 있습니다.",
+    "환율": "우리 돈과 외국 돈을 바꾸는 비율입니다. 원달러 환율이 오르면 수입 물가 부담이 커질 수 있습니다.",
+    "물가": "생활에 필요한 상품과 서비스 가격의 전반적인 수준입니다.",
+    "기준금리": "한국은행 같은 중앙은행이 정하는 대표 금리입니다. 대출금리와 예금금리에 영향을 줍니다.",
+    "증시": "주식이 거래되는 시장입니다. 기업 실적, 금리, 환율, 투자 심리에 영향을 받습니다.",
+    "채권": "정부나 회사가 돈을 빌리기 위해 발행하는 증서입니다. 금리 변화에 민감합니다.",
+    "경기침체": "소비, 투자, 생산이 줄어 경제 활동이 전반적으로 위축되는 상태입니다.",
+    "반도체": "전자제품과 AI 서버의 핵심 부품입니다. 한국 수출과 증시에 큰 영향을 줍니다.",
+}
+
+
+@dataclass(frozen=True)
+class Settings:
+    sender_mode: str
+    business_message_webhook_url: str
+    business_message_api_key: str
+    news_keywords: list[str]
+    news_rss_feeds: list[str]
+    max_news_items: int
+    subscribers_file: Path
+    sent_file: Path
+    briefing_output_file: Path
+    site_dir: Path
+
+
+@dataclass(frozen=True)
+class NewsItem:
+    title: str
+    link: str
+    source: str
+    published: str
+
+
+@dataclass(frozen=True)
+class Subscriber:
+    id: str
+    name: str
+    phone: str
+    kakao_channel_user_key: str
+    subscription_status: str
+    kakao_opt_in: bool
+    plan: str
+
+
+class MessageSender(Protocol):
+    def send(self, subscriber: Subscriber, text: str, link: str) -> None:
+        ...
+
+
+class DryRunSender:
+    def send(self, subscriber: Subscriber, text: str, link: str) -> None:
+        print(f"[DRY RUN] recipient={subscriber.id} phone={mask_phone(subscriber.phone)} link={link}")
+        print(text)
+        print()
+
+
+class BusinessWebhookSender:
+    def __init__(self, webhook_url: str, api_key: str) -> None:
+        if not webhook_url:
+            raise SystemExit("BUSINESS_MESSAGE_WEBHOOK_URL is required when SENDER_MODE=business_webhook.")
+        self.webhook_url = webhook_url
+        self.api_key = api_key
+
+    def send(self, subscriber: Subscriber, text: str, link: str) -> None:
+        payload = {
+            "recipient": {
+                "id": subscriber.id,
+                "phone": subscriber.phone,
+                "kakao_channel_user_key": subscriber.kakao_channel_user_key,
+            },
+            "message": {
+                "text": text[:1000],
+                "link": link,
+                "type": "economic_news_digest",
+            },
+        }
+        headers = {"Content-Type": "application/json;charset=utf-8"}
+        if self.api_key:
+            headers["Authorization"] = f"Bearer {self.api_key}"
+        http_post_json(self.webhook_url, payload, headers)
+
+
+def load_dotenv(path: Path = Path(".env")) -> None:
+    if not path.exists():
+        return
+
+    for raw_line in path.read_text(encoding="utf-8").splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        os.environ.setdefault(key.strip(), value.strip().strip('"').strip("'"))
+
+
+def split_csv(value: str) -> list[str]:
+    return [item.strip() for item in value.split(",") if item.strip()]
+
+
+def get_settings() -> Settings:
+    load_dotenv()
+    return Settings(
+        sender_mode=os.getenv("SENDER_MODE", "dry_run"),
+        business_message_webhook_url=os.getenv("BUSINESS_MESSAGE_WEBHOOK_URL", ""),
+        business_message_api_key=os.getenv("BUSINESS_MESSAGE_API_KEY", ""),
+        news_keywords=split_csv(os.getenv("NEWS_KEYWORDS", DEFAULT_NEWS_KEYWORDS)),
+        news_rss_feeds=split_csv(os.getenv("NEWS_RSS_FEEDS", DEFAULT_NEWS_RSS_FEEDS)),
+        max_news_items=int(os.getenv("MAX_NEWS_ITEMS", "5")),
+        subscribers_file=Path(os.getenv("SUBSCRIBERS_FILE", "data/subscribers.json")),
+        sent_file=Path(os.getenv("SENT_FILE", ".state/sent_items.json")),
+        briefing_output_file=Path(os.getenv("BRIEFING_OUTPUT_FILE", "output/kakao_briefing.txt")),
+        site_dir=Path(os.getenv("SITE_DIR", "site")),
+    )
+
+
+def http_post_json(url: str, payload: dict[str, Any], headers: dict[str, str]) -> dict[str, Any]:
+    request = urllib.request.Request(
+        url,
+        data=json.dumps(payload, ensure_ascii=False).encode("utf-8"),
+        headers=headers,
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=20) as response:
+            body = response.read().decode("utf-8", errors="replace")
+            return json.loads(body) if body else {}
+    except urllib.error.HTTPError as error:
+        body = error.read().decode("utf-8", errors="replace")
+        raise RuntimeError(f"HTTP {error.code}: {body}") from error
+
+
+def http_get_text(url: str) -> str:
+    request = urllib.request.Request(
+        url,
+        headers={"User-Agent": "kakao-economic-news-alert/1.0"},
+        method="GET",
+    )
+    with urllib.request.urlopen(request, timeout=20) as response:
+        return response.read().decode("utf-8", errors="replace")
+
+
+def save_json(path: Path, data: dict[str, Any] | list[Any]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
+
+
+def load_json(path: Path, default: Any) -> Any:
+    if not path.exists():
+        return default
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def load_subscribers(path: Path) -> list[Subscriber]:
+    rows = load_json(path, [])
+    subscribers: list[Subscriber] = []
+    for row in rows:
+        subscribers.append(
+            Subscriber(
+                id=str(row.get("id", "")),
+                name=str(row.get("name", "")),
+                phone=str(row.get("phone", "")),
+                kakao_channel_user_key=str(row.get("kakao_channel_user_key", "")),
+                subscription_status=str(row.get("subscription_status", "")),
+                kakao_opt_in=bool(row.get("kakao_opt_in", False)),
+                plan=str(row.get("plan", "")),
+            )
+        )
+    return subscribers
+
+
+def active_subscribers(subscribers: list[Subscriber]) -> list[Subscriber]:
+    return [
+        subscriber
+        for subscriber in subscribers
+        if subscriber.subscription_status == "active" and subscriber.kakao_opt_in
+    ]
+
+
+def build_sender(settings: Settings) -> MessageSender:
+    if settings.sender_mode == "dry_run":
+        return DryRunSender()
+    if settings.sender_mode == "business_webhook":
+        return BusinessWebhookSender(
+            webhook_url=settings.business_message_webhook_url,
+            api_key=settings.business_message_api_key,
+        )
+    raise SystemExit(f"Unsupported SENDER_MODE: {settings.sender_mode}")
+
+
+def parse_rss(xml_text: str, fallback_source: str) -> list[NewsItem]:
+    root = ET.fromstring(xml_text)
+    items: list[NewsItem] = []
+    for item in root.findall(".//item"):
+        title = html.unescape((item.findtext("title") or "").strip())
+        link = html.unescape((item.findtext("link") or "").strip())
+        published = (item.findtext("pubDate") or "").strip()
+        source = fallback_source
+        source_node = item.find("{http://news.google.com/rss}source")
+        if source_node is not None and source_node.text:
+            source = source_node.text.strip()
+        if title and link:
+            items.append(NewsItem(title=title, link=link, source=source, published=published))
+    return items
+
+
+def fetch_news(settings: Settings) -> list[NewsItem]:
+    if not settings.news_rss_feeds:
+        raise SystemExit("NEWS_RSS_FEEDS is required.")
+
+    all_items: list[NewsItem] = []
+    for feed_url in settings.news_rss_feeds:
+        try:
+            xml_text = http_get_text(feed_url)
+            all_items.extend(parse_rss(xml_text, fallback_source=urllib.parse.urlparse(feed_url).netloc))
+        except Exception as error:
+            print(f"RSS fetch failed: {feed_url} ({error})", file=sys.stderr)
+
+    return dedupe_news(filter_news(all_items, settings.news_keywords))
+
+
+def filter_news(items: list[NewsItem], keywords: list[str]) -> list[NewsItem]:
+    if not keywords:
+        return items
+    lowered_keywords = [keyword.casefold() for keyword in keywords]
+    return [
+        item
+        for item in items
+        if any(keyword in f"{item.title} {item.source}".casefold() for keyword in lowered_keywords)
+    ]
+
+
+def dedupe_news(items: list[NewsItem]) -> list[NewsItem]:
+    seen: set[str] = set()
+    unique: list[NewsItem] = []
+    for item in items:
+        if item.link in seen:
+            continue
+        seen.add(item.link)
+        unique.append(item)
+    return unique
+
+
+def extract_terms(items: list[NewsItem], limit: int = 2) -> list[dict[str, str]]:
+    haystack = " ".join(item.title for item in items)
+    selected: list[dict[str, str]] = []
+    for term, definition in TERM_DEFINITIONS.items():
+        if term in haystack:
+            selected.append({"term": term, "definition": definition})
+        if len(selected) == limit:
+            return selected
+
+    for term, definition in TERM_DEFINITIONS.items():
+        if not any(row["term"] == term for row in selected):
+            selected.append({"term": term, "definition": definition})
+        if len(selected) == limit:
+            return selected
+    return selected
+
+
+def build_impact_note(items: list[NewsItem]) -> str:
+    titles = " ".join(item.title for item in items)
+    if any(word in titles for word in ["환율", "원달러", "달러"]):
+        return "환율 이슈는 수입 물가와 외국인 자금 흐름에 영향을 줄 수 있어 증시와 생활 물가를 함께 봐야 합니다."
+    if any(word in titles for word in ["금리", "긴축", "인플레이션", "물가"]):
+        return "금리와 물가 이슈는 대출 부담, 소비 심리, 주식시장 흐름에 직접적인 영향을 줄 수 있습니다."
+    if any(word in titles for word in ["반도체", "AI", "기업"]):
+        return "기업과 산업 이슈는 실적 기대와 투자 심리에 영향을 주며, 관련 업종의 주가 변동으로 이어질 수 있습니다."
+    return "오늘 뉴스는 시장 심리와 정책 기대에 영향을 줄 수 있어 금리, 환율, 증시 흐름을 함께 확인하는 것이 좋습니다."
+
+
+def build_digest(items: list[NewsItem]) -> tuple[str, str]:
+    now = dt.datetime.now().strftime("%Y-%m-%d %H:%M")
+    lines = [f"[오늘의 3분경제] {now}", ""]
+    lines.append("꼭 봐야 할 경제 뉴스만 짧게 정리했습니다.")
+    lines.append("")
+    for index, item in enumerate(items, start=1):
+        lines.append(f"{index}. {item.title}")
+        lines.append(f"   출처: {item.source}")
+    lines.append("")
+    lines.append("영향:")
+    lines.append(build_impact_note(items))
+    lines.append("")
+    terms = extract_terms(items)
+    lines.append("오늘의 용어:")
+    for term in terms:
+        lines.append(f"- {term['term']}: {term['definition']}")
+    lines.append("")
+    lines.append("채널 추가 후 매일 경제 브리핑을 받아보세요.")
+    return "\n".join(lines), items[0].link
+
+
+def build_article_data(items: list[NewsItem]) -> dict[str, Any]:
+    return {
+        "title": "오늘의 3분경제",
+        "generated_at": dt.datetime.now().strftime("%Y-%m-%d %H:%M"),
+        "summary": "꼭 봐야 할 경제 뉴스만 짧게 정리했습니다.",
+        "impact": build_impact_note(items),
+        "terms": extract_terms(items),
+        "items": [
+            {
+                "title": item.title,
+                "source": item.source,
+                "link": item.link,
+                "published": item.published,
+            }
+            for item in items
+        ],
+    }
+
+
+def preview(settings: Settings) -> None:
+    news = fetch_news(settings)[: settings.max_news_items]
+    if not news:
+        print("No news items matched.")
+        return
+    text, link = build_digest(news)
+    print(text)
+    print()
+    print(f"대표 링크: {link}")
+
+
+def export_briefing(settings: Settings) -> None:
+    news = fetch_news(settings)[: settings.max_news_items]
+    if not news:
+        print("No news items matched.")
+        return
+
+    text, link = build_digest(news)
+    output = f"{text}\n\n대표 링크:\n{link}\n"
+    settings.briefing_output_file.parent.mkdir(parents=True, exist_ok=True)
+    settings.briefing_output_file.write_text(output, encoding="utf-8")
+    print(f"Briefing exported: {settings.briefing_output_file}")
+
+
+def export_site(settings: Settings) -> None:
+    news = fetch_news(settings)[: settings.max_news_items]
+    if not news:
+        print("No news items matched.")
+        return
+
+    data = build_article_data(news)
+    settings.site_dir.mkdir(parents=True, exist_ok=True)
+    copy_site_assets(settings.site_dir)
+    (settings.site_dir / ".nojekyll").write_text("", encoding="utf-8")
+    save_json(settings.site_dir / "latest.json", data)
+    (settings.site_dir / "index.html").write_text(render_site_html(data), encoding="utf-8")
+    print(f"Site exported: {settings.site_dir / 'index.html'}")
+
+
+def copy_site_assets(site_dir: Path) -> None:
+    source = Path("assets/kakao-channel-profile.png")
+    if not source.exists():
+        return
+    target_dir = site_dir / "assets"
+    target_dir.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(source, target_dir / "kakao-channel-profile.png")
+
+
+def render_site_html(data: dict[str, Any]) -> str:
+    term_buttons = "\n".join(
+        f'<a class="term-button" href="#term-{slugify(term["term"])}">{escape(term_question(term["term"]))}</a>'
+        for term in data["terms"]
+    )
+    news_items = "\n".join(
+        f"""
+        <li class="news-item">
+          <a href="{escape(item['link'])}" target="_blank" rel="noopener noreferrer">{escape(item['title'])}</a>
+          <span>{escape(item['source'])}</span>
+        </li>
+        """
+        for item in data["items"]
+    )
+    term_cards = "\n".join(
+        f"""
+        <section class="term-card" id="term-{slugify(term['term'])}">
+          <h3>{escape(term['term'])}이란?</h3>
+          <p>{escape(term['definition'])}</p>
+        </section>
+        """
+        for term in data["terms"]
+    )
+    return f"""<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>3분경제</title>
+  <style>
+    :root {{
+      --yellow: #ffdc2e;
+      --ink: #202124;
+      --muted: #6b7280;
+      --line: #e7e2cf;
+      --green: #2eb85c;
+      --paper: #fffdf4;
+    }}
+    * {{ box-sizing: border-box; }}
+    body {{
+      margin: 0;
+      font-family: Arial, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+      background: #f6f1df;
+      color: var(--ink);
+      line-height: 1.55;
+    }}
+    header {{
+      background: var(--yellow);
+      border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+    }}
+    .wrap {{
+      width: min(920px, calc(100% - 32px));
+      margin: 0 auto;
+    }}
+    .brand {{
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 24px 0;
+    }}
+    .brand img {{
+      width: 58px;
+      height: 58px;
+      border-radius: 16px;
+    }}
+    .brand h1 {{
+      margin: 0;
+      font-size: 28px;
+      letter-spacing: 0;
+    }}
+    .brand p {{
+      margin: 2px 0 0;
+      color: #3d3d3d;
+      font-size: 14px;
+    }}
+    main {{
+      padding: 28px 0 48px;
+    }}
+    .briefing {{
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 24px;
+    }}
+    .meta {{
+      color: var(--muted);
+      font-size: 14px;
+      margin: 0 0 10px;
+    }}
+    h2 {{
+      margin: 0 0 8px;
+      font-size: 26px;
+      letter-spacing: 0;
+    }}
+    .summary {{
+      margin: 0 0 20px;
+      color: #424242;
+    }}
+    .news-list {{
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: grid;
+      gap: 10px;
+    }}
+    .news-item {{
+      padding: 14px 0;
+      border-top: 1px solid var(--line);
+    }}
+    .news-item a {{
+      display: block;
+      color: var(--ink);
+      text-decoration: none;
+      font-weight: 700;
+    }}
+    .news-item span {{
+      display: block;
+      color: var(--muted);
+      font-size: 13px;
+      margin-top: 4px;
+    }}
+    .impact {{
+      margin-top: 22px;
+      padding: 16px;
+      border-left: 4px solid var(--green);
+      background: #f5fff7;
+      border-radius: 6px;
+    }}
+    .term-buttons {{
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 20px;
+    }}
+    .term-button {{
+      min-width: 92px;
+      text-align: center;
+      background: var(--ink);
+      color: white;
+      text-decoration: none;
+      border-radius: 999px;
+      padding: 9px 13px;
+      font-size: 14px;
+      font-weight: 700;
+    }}
+    .terms {{
+      display: grid;
+      gap: 12px;
+      margin-top: 18px;
+    }}
+    .term-card {{
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 16px;
+      background: white;
+    }}
+    .term-card h3 {{
+      margin: 0 0 6px;
+      font-size: 18px;
+      letter-spacing: 0;
+    }}
+    .term-card p {{
+      margin: 0;
+      color: #343434;
+    }}
+    footer {{
+      color: var(--muted);
+      font-size: 13px;
+      padding: 20px 0 0;
+    }}
+    @media (max-width: 560px) {{
+      .brand h1 {{ font-size: 24px; }}
+      .briefing {{ padding: 18px; }}
+      h2 {{ font-size: 22px; }}
+    }}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap brand">
+      <img src="assets/kakao-channel-profile.png" alt="3분경제 로고">
+      <div>
+        <h1>3분경제</h1>
+        <p>매일 꼭 봐야 할 경제 뉴스만 짧게</p>
+      </div>
+    </div>
+  </header>
+  <main class="wrap">
+    <article class="briefing">
+      <p class="meta">{escape(data['generated_at'])} 업데이트</p>
+      <h2>{escape(data['title'])}</h2>
+      <p class="summary">{escape(data['summary'])}</p>
+      <ol class="news-list">
+        {news_items}
+      </ol>
+      <section class="impact">
+        <strong>어떤 영향이 있나요?</strong>
+        <p>{escape(data['impact'])}</p>
+      </section>
+      <nav class="term-buttons" aria-label="경제 용어 바로가기">
+        {term_buttons}
+      </nav>
+      <div class="terms">
+        {term_cards}
+      </div>
+    </article>
+    <footer>
+      기사 본문을 복제하지 않고, 공개된 제목과 링크를 바탕으로 경제 흐름을 쉽게 설명합니다.
+    </footer>
+  </main>
+</body>
+</html>
+"""
+
+
+def run_once(settings: Settings) -> None:
+    subscribers = active_subscribers(load_subscribers(settings.subscribers_file))
+    if not subscribers:
+        print("No active subscribers. Check SUBSCRIBERS_FILE.")
+        return
+
+    sent_links = set(load_json(settings.sent_file, []))
+    fresh_items = [item for item in fetch_news(settings) if item.link not in sent_links]
+    selected = fresh_items[: settings.max_news_items]
+    if not selected:
+        print("No fresh news items to send.")
+        return
+
+    text, link = build_digest(selected)
+    sender = build_sender(settings)
+    for subscriber in subscribers:
+        sender.send(subscriber, text, link)
+
+    save_json(settings.sent_file, sorted(sent_links | {item.link for item in selected}))
+    print(f"Sent digest to {len(subscribers)} active subscribers with {len(selected)} news items.")
+
+
+def escape(value: str) -> str:
+    return html.escape(str(value), quote=True)
+
+
+def slugify(value: str) -> str:
+    slug = re.sub(r"[^0-9A-Za-z가-힣]+", "-", value).strip("-")
+    return slug or "term"
+
+
+def term_question(term: str) -> str:
+    return f"{term}{'이란?' if has_final_consonant(term) else '란?'}"
+
+
+def has_final_consonant(value: str) -> bool:
+    if not value:
+        return False
+    code = ord(value[-1])
+    if 0xAC00 <= code <= 0xD7A3:
+        return (code - 0xAC00) % 28 != 0
+    return False
+
+
+def mask_phone(phone: str) -> str:
+    if len(phone) < 7:
+        return "***"
+    return f"{phone[:3]}****{phone[-4:]}"
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description="Generate 3분경제 briefings and site pages.")
+    subparsers = parser.add_subparsers(dest="command", required=True)
+    subparsers.add_parser("preview", help="Fetch news and print the message preview.")
+    subparsers.add_parser("export-briefing", help="Export a KakaoTalk-ready briefing text file.")
+    subparsers.add_parser("export-site", help="Export the latest briefing as a static web page.")
+    subparsers.add_parser("run-once", help="Fetch news and send a digest to active subscribers.")
+
+    args = parser.parse_args(argv)
+    settings = get_settings()
+
+    if args.command == "preview":
+        preview(settings)
+    elif args.command == "export-briefing":
+        export_briefing(settings)
+    elif args.command == "export-site":
+        export_site(settings)
+    elif args.command == "run-once":
+        run_once(settings)
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
