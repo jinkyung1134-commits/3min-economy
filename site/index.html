@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>3분경제</title>
+  <style>
+    :root {
+      --yellow: #ffdc2e;
+      --ink: #202124;
+      --muted: #6b7280;
+      --line: #e7e2cf;
+      --green: #2eb85c;
+      --paper: #fffdf4;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Arial, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+      background: #f6f1df;
+      color: var(--ink);
+      line-height: 1.55;
+    }
+    header {
+      background: var(--yellow);
+      border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+    }
+    .wrap {
+      width: min(920px, calc(100% - 32px));
+      margin: 0 auto;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 24px 0;
+    }
+    .brand img {
+      width: 58px;
+      height: 58px;
+      border-radius: 16px;
+    }
+    .brand h1 {
+      margin: 0;
+      font-size: 28px;
+      letter-spacing: 0;
+    }
+    .brand p {
+      margin: 2px 0 0;
+      color: #3d3d3d;
+      font-size: 14px;
+    }
+    main {
+      padding: 28px 0 48px;
+    }
+    .briefing {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 24px;
+    }
+    .meta {
+      color: var(--muted);
+      font-size: 14px;
+      margin: 0 0 10px;
+    }
+    h2 {
+      margin: 0 0 8px;
+      font-size: 26px;
+      letter-spacing: 0;
+    }
+    .summary {
+      margin: 0 0 20px;
+      color: #424242;
+    }
+    .news-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: grid;
+      gap: 10px;
+    }
+    .news-item {
+      padding: 14px 0;
+      border-top: 1px solid var(--line);
+    }
+    .news-item a {
+      display: block;
+      color: var(--ink);
+      text-decoration: none;
+      font-weight: 700;
+    }
+    .news-item span {
+      display: block;
+      color: var(--muted);
+      font-size: 13px;
+      margin-top: 4px;
+    }
+    .impact {
+      margin-top: 22px;
+      padding: 16px;
+      border-left: 4px solid var(--green);
+      background: #f5fff7;
+      border-radius: 6px;
+    }
+    .term-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 20px;
+    }
+    .term-button {
+      min-width: 92px;
+      text-align: center;
+      background: var(--ink);
+      color: white;
+      text-decoration: none;
+      border-radius: 999px;
+      padding: 9px 13px;
+      font-size: 14px;
+      font-weight: 700;
+    }
+    .terms {
+      display: grid;
+      gap: 12px;
+      margin-top: 18px;
+    }
+    .term-card {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 16px;
+      background: white;
+    }
+    .term-card h3 {
+      margin: 0 0 6px;
+      font-size: 18px;
+      letter-spacing: 0;
+    }
+    .term-card p {
+      margin: 0;
+      color: #343434;
+    }
+    footer {
+      color: var(--muted);
+      font-size: 13px;
+      padding: 20px 0 0;
+    }
+    @media (max-width: 560px) {
+      .brand h1 { font-size: 24px; }
+      .briefing { padding: 18px; }
+      h2 { font-size: 22px; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap brand">
+      <img src="assets/kakao-channel-profile.png" alt="3분경제 로고">
+      <div>
+        <h1>3분경제</h1>
+        <p>매일 꼭 봐야 할 경제 뉴스만 짧게</p>
+      </div>
+    </div>
+  </header>
+  <main class="wrap">
+    <article class="briefing">
+      <p class="meta">2026-05-30 01:29 업데이트</p>
+      <h2>오늘의 3분경제</h2>
+      <p class="summary">꼭 봐야 할 경제 뉴스만 짧게 정리했습니다.</p>
+      <ol class="news-list">
+        
+        <li class="news-item">
+          <a href="https://news.google.com/rss/articles/CBMiakFVX3lxTE4tamFmNklSQ0tfaHVPWVRHWV9TR3dyRV9SRkZXeDIxbVNNYW1VdTJ6N3JIUlhzNW9XaGhvVTVfVUJDNmIxZ2JFMUg2OTdyMFNxYlRYYVlKcWJnc2R6dFA4ZzVOb25DZjdfQlE?oc=5" target="_blank" rel="noopener noreferrer">증시 호황에 저축은행 비이자이익 1002%↑ - 더리브스</a>
+          <span>news.google.com</span>
+        </li>
+        
+
+        <li class="news-item">
+          <a href="https://news.google.com/rss/articles/CBMiVkFVX3lxTFBzZHFydzE0a1Rab2owUEdLeEp1bndqQ0doNzdHekRPbFNwcFdxZTkzcjN6eTNFMkVrSVJ5di1nbkYweGxVTVBLSXNnd0hkdFFEWkwwdTNR?oc=5" target="_blank" rel="noopener noreferrer">금감원, 우리금융·동양생명 주식교환 &#x27;제동&#x27; - DealSite경제TV</a>
+          <span>news.google.com</span>
+        </li>
+        
+
+        <li class="news-item">
+          <a href="https://news.google.com/rss/articles/CBMickFVX3lxTE93YXJvVDlkdnZmbnBuNkNjZ3JWT1dQa3M3aWRPQ1ZTaElGVzRlS2NwSDdUVHdjTmxOaEV5ZXlMWlRyZnhNSkJRQUQwY3JMdlRXRndvYzZGQlE3ZjdfaGR4aVBrMzVJUnhNeGU2alpGbndqZw?oc=5" target="_blank" rel="noopener noreferrer">증시 활황에 판 뒤집힌 금융권…증권사, 은행 턱밑 추격 - 인더스트리뉴스</a>
+          <span>news.google.com</span>
+        </li>
+        
+
+        <li class="news-item">
+          <a href="https://news.google.com/rss/articles/CBMiVkFVX3lxTE1wb0xFUU9zZ2hWYW84U3poMFdGQ2pqeTVzWFpDWERmZFlyVDhRRGNia0lCbld3Ml9HQVRCTWkwaTZpOWgzX3VQQS1DRGJsQnZTaUotN2p3?oc=5" target="_blank" rel="noopener noreferrer">증시 ‘팔천피’ 질주에도 채권·원화가격 왜 폭락? [홍길용의 화식열전] - 헤럴드경제</a>
+          <span>news.google.com</span>
+        </li>
+        
+
+        <li class="news-item">
+          <a href="https://news.google.com/rss/articles/CBMiW0FVX3lxTFBSYzJXdkhjc2E5MmpuV0x1UFdfU21MSGl5TVM5aUY5NzI0Z3JIUmZRcnNTMDdpaGxZbjZ1WFNJQThva0x0R0V5aHgtcWhXb3hOajEzQTZNNE5MUkE?oc=5" target="_blank" rel="noopener noreferrer">주식시장에 &#x27;나만 아는 꿀정보&#x27;는 없다? 경제학자의 뼈 때리는 팩폭 [수능에 나오는 경제·금융] - 생글생글</a>
+          <span>news.google.com</span>
+        </li>
+        
+      </ol>
+      <section class="impact">
+        <strong>어떤 영향이 있나요?</strong>
+        <p>오늘 뉴스는 시장 심리와 정책 기대에 영향을 줄 수 있어 금리, 환율, 증시 흐름을 함께 확인하는 것이 좋습니다.</p>
+      </section>
+      <nav class="term-buttons" aria-label="경제 용어 바로가기">
+        <a class="term-button" href="#term-증시">증시란?</a>
+<a class="term-button" href="#term-채권">채권이란?</a>
+      </nav>
+      <div class="terms">
+        
+        <section class="term-card" id="term-증시">
+          <h3>증시이란?</h3>
+          <p>주식이 거래되는 시장입니다. 기업 실적, 금리, 환율, 투자 심리에 영향을 받습니다.</p>
+        </section>
+        
+
+        <section class="term-card" id="term-채권">
+          <h3>채권이란?</h3>
+          <p>정부나 회사가 돈을 빌리기 위해 발행하는 증서입니다. 금리 변화에 민감합니다.</p>
+        </section>
+        
+      </div>
+    </article>
+    <footer>
+      기사 본문을 복제하지 않고, 공개된 제목과 링크를 바탕으로 경제 흐름을 쉽게 설명합니다.
+    </footer>
+  </main>
+</body>
+</html>
