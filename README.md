@@ -182,3 +182,46 @@ BUSINESS_MESSAGE_API_KEY=발송사 API 키
 ```
 
 유료 전환 전에는 광고성 정보 수신동의, 수신거부, 해지, 환불, 개인정보 보관 기간을 반드시 정리해야 합니다.
+
+## 카카오모먼트 비즈니스 인증 테스트
+
+REST API 키만 있는 상태에서 먼저 비즈니스 인증 흐름을 테스트할 수 있습니다. 카카오 개발자 콘솔에서 아래 Redirect URI를 등록합니다.
+
+```text
+http://localhost:8000/kakao/callback
+```
+
+로컬 `.env`에 REST API 키를 넣습니다. 채팅에는 키를 보내지 마세요.
+
+```text
+KAKAO_REST_API_KEY=...
+KAKAO_REDIRECT_URI=http://localhost:8000/kakao/callback
+KAKAO_BUSINESS_SCOPES=moment_management
+```
+
+인증 URL 생성:
+
+```powershell
+python -m src.kakao_business_auth auth-url
+```
+
+출력된 URL을 브라우저에 붙여넣고 카카오 계정으로 동의합니다. 동의 후 이동한 주소가 열리지 않아도 괜찮습니다. 주소창에 아래처럼 `code=` 값이 붙어 있으면 그 값만 복사합니다.
+
+```text
+http://localhost:8000/kakao/callback?code=...
+```
+
+토큰 교환:
+
+```powershell
+python -m src.kakao_business_auth exchange-token --code 복사한_CODE값
+```
+
+성공하면 실제 응답의 `access_token`을 GitHub Actions Secret에 저장합니다.
+
+```text
+KAKAO_BUSINESS_ACCESS_TOKEN
+KAKAO_BUSINESS_REFRESH_TOKEN
+```
+
+만약 `client_secret`이 필요하다는 오류가 나오면 카카오 개발자 콘솔의 `보안 > Client Secret`에서 값을 확인해 `KAKAO_CLIENT_SECRET`으로 추가한 뒤 다시 시도합니다.
