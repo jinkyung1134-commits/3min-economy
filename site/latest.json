@@ -1,48 +1,62 @@
 {
   "title": "오늘의 3분경제",
-  "generated_at": "2026-05-30 01:54",
+  "generated_at": "2026-05-30 02:11",
   "summary": "긴 기사 대신 오늘의 경제 흐름만 빠르게 확인하세요.",
   "impact": "오늘 뉴스는 시장 심리와 정책 기대에 영향을 줄 수 있어 금리, 환율, 증시 흐름을 함께 확인하는 것이 좋습니다.",
-  "terms": [
-    {
-      "term": "증시",
-      "definition": "주식이 거래되는 시장입니다. 기업 실적, 금리, 환율, 투자 심리에 영향을 받습니다."
-    },
-    {
-      "term": "채권",
-      "definition": "정부나 회사가 돈을 빌리기 위해 발행하는 증서입니다. 금리 변화에 민감합니다."
-    }
-  ],
   "items": [
     {
       "title": "증시 호황에 저축은행 비이자이익 1002%↑ - 더리브스",
       "source": "더리브스",
       "link": "https://news.google.com/rss/articles/CBMiakFVX3lxTE4tamFmNklSQ0tfaHVPWVRHWV9TR3dyRV9SRkZXeDIxbVNNYW1VdTJ6N3JIUlhzNW9XaGhvVTVfVUJDNmIxZ2JFMUg2OTdyMFNxYlRYYVlKcWJnc2R6dFA4ZzVOb25DZjdfQlE?oc=5",
-      "published": "Fri, 29 May 2026 03:24:46 GMT"
+      "published": "Fri, 29 May 2026 03:24:46 GMT",
+      "terms": [
+        {
+          "term": "증시",
+          "definition": "주식이 거래되는 시장입니다. 기업 실적, 금리, 환율, 투자 심리에 영향을 받습니다."
+        }
+      ]
     },
     {
       "title": "금감원, 우리금융·동양생명 주식교환 '제동' - DealSite경제TV",
       "source": "DealSite경제TV",
       "link": "https://news.google.com/rss/articles/CBMiVkFVX3lxTFBzZHFydzE0a1Rab2owUEdLeEp1bndqQ0doNzdHekRPbFNwcFdxZTkzcjN6eTNFMkVrSVJ5di1nbkYweGxVTVBLSXNnd0hkdFFEWkwwdTNR?oc=5",
-      "published": "Wed, 27 May 2026 01:49:27 GMT"
+      "published": "Wed, 27 May 2026 01:49:27 GMT",
+      "terms": []
     },
     {
       "title": "증시 활황에 판 뒤집힌 금융권…증권사, 은행 턱밑 추격 - 인더스트리뉴스",
       "source": "인더스트리뉴스",
       "link": "https://news.google.com/rss/articles/CBMickFVX3lxTE93YXJvVDlkdnZmbnBuNkNjZ3JWT1dQa3M3aWRPQ1ZTaElGVzRlS2NwSDdUVHdjTmxOaEV5ZXlMWlRyZnhNSkJRQUQwY3JMdlRXRndvYzZGQlE3ZjdfaGR4aVBrMzVJUnhNeGU2alpGbndqZw?oc=5",
-      "published": "Tue, 19 May 2026 02:36:39 GMT"
+      "published": "Tue, 19 May 2026 02:36:39 GMT",
+      "terms": [
+        {
+          "term": "증시",
+          "definition": "주식이 거래되는 시장입니다. 기업 실적, 금리, 환율, 투자 심리에 영향을 받습니다."
+        }
+      ]
     },
     {
       "title": "증시 ‘팔천피’ 질주에도 채권·원화가격 왜 폭락? [홍길용의 화식열전] - 헤럴드경제",
       "source": "헤럴드경제",
       "link": "https://news.google.com/rss/articles/CBMiVkFVX3lxTE1wb0xFUU9zZ2hWYW84U3poMFdGQ2pqeTVzWFpDWERmZFlyVDhRRGNia0lCbld3Ml9HQVRCTWkwaTZpOWgzX3VQQS1DRGJsQnZTaUotN2p3?oc=5",
-      "published": "Tue, 26 May 2026 15:49:37 GMT"
+      "published": "Tue, 26 May 2026 15:49:37 GMT",
+      "terms": [
+        {
+          "term": "증시",
+          "definition": "주식이 거래되는 시장입니다. 기업 실적, 금리, 환율, 투자 심리에 영향을 받습니다."
+        },
+        {
+          "term": "채권",
+          "definition": "정부나 회사가 돈을 빌리기 위해 발행하는 증서입니다. 금리 변화에 민감합니다."
+        }
+      ]
     },
     {
       "title": "주식시장에 '나만 아는 꿀정보'는 없다? 경제학자의 뼈 때리는 팩폭 [수능에 나오는 경제·금융] - 생글생글",
       "source": "생글생글",
       "link": "https://news.google.com/rss/articles/CBMiW0FVX3lxTFBSYzJXdkhjc2E5MmpuV0x1UFdfU21MSGl5TVM5aUY5NzI0Z3JIUmZRcnNTMDdpaGxZbjZ1WFNJQThva0x0R0V5aHgtcWhXb3hOajEzQTZNNE5MUkE?oc=5",
-      "published": "Mon, 04 May 2026 00:05:37 GMT"
+      "published": "Mon, 04 May 2026 00:05:37 GMT",
+      "terms": []
     }
   ]
 }
