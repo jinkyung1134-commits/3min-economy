@@ -1,0 +1,20 @@
+[
+  {
+    "id": "customer_001",
+    "name": "Sample Customer",
+    "phone": "01012345678",
+    "kakao_channel_user_key": "",
+    "subscription_status": "active",
+    "kakao_opt_in": true,
+    "plan": "monthly_basic"
+  },
+  {
+    "id": "customer_002",
+    "name": "Paused Customer",
+    "phone": "01000000000",
+    "kakao_channel_user_key": "",
+    "subscription_status": "paused",
+    "kakao_opt_in": true,
+    "plan": "monthly_basic"
+  }
+]
