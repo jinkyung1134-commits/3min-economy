@@ -3,18 +3,26 @@
     "id": "customer_001",
     "name": "Sample Customer",
     "phone": "01012345678",
+    "email": "sample@example.com",
     "kakao_channel_user_key": "",
     "subscription_status": "active",
     "kakao_opt_in": true,
-    "plan": "monthly_basic"
+    "marketing_opt_in": true,
+    "plan": "free",
+    "interests": ["금리", "환율", "증시"],
+    "created_at": "2026-05-30T07:00:00+09:00"
   },
   {
     "id": "customer_002",
-    "name": "Paused Customer",
+    "name": "Paid Customer",
     "phone": "01000000000",
+    "email": "paid@example.com",
     "kakao_channel_user_key": "",
-    "subscription_status": "paused",
+    "subscription_status": "active",
     "kakao_opt_in": true,
-    "plan": "monthly_basic"
+    "marketing_opt_in": true,
+    "plan": "premium_monthly",
+    "interests": ["부동산", "반도체"],
+    "created_at": "2026-05-30T07:00:00+09:00"
   }
 ]
