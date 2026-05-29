@@ -1,9 +1,22 @@
 {
   "title": "오늘의 3분경제",
-  "generated_at": "2026-05-30 02:30",
+  "generated_at": "2026-05-30 02:38",
   "summary": "긴 기사 대신 오늘의 경제 흐름만 빠르게 확인하세요.",
   "impact": "환율 이슈는 수입 물가와 외국인 자금 흐름에 영향을 줄 수 있어 증시와 생활 물가를 함께 봐야 합니다.",
   "items": [
+    {
+      "title": "삼성-SK, 앤스로픽에 투자…반도체 공급자서 AI 핵심 파트너로 - 네이트",
+      "source": "네이트",
+      "link": "https://news.google.com/rss/articles/CBMiU0FVX3lxTE5XbHJEMXQ4bmNDVjZIWlFZb2RkdDdWcHpfd2lEekp6bFpTMkVMUlMtbEpWNVc3Zl9hX25HT203bmxkSUtWc1RoVkdEOHk2VlVjUHE0?oc=5",
+      "published": "Fri, 29 May 2026 16:43:00 GMT",
+      "terms": [
+        {
+          "term": "반도체",
+          "definition": "전자제품과 AI 서버의 핵심 부품입니다. 한국 수출과 증시에 큰 영향을 줍니다."
+        }
+      ],
+      "relative_time": "55분 전"
+    },
     {
       "title": "증시 호황에 저축은행 비이자이익 1002%↑ - 더리브스",
       "source": "더리브스",
@@ -18,10 +31,74 @@
       "relative_time": "14시간 전"
     },
     {
-      "title": "한은, 기준금리 연 2.50% 동결…물가·환율 불안에 긴축 유지 - 인더스트리뉴스",
-      "source": "인더스트리뉴스",
-      "link": "https://news.google.com/rss/articles/CBMickFVX3lxTFBhUHdwVlFtLUlveHo4VmU3Q2FmOVdUcUhzVXRsUk9mZDBhSXVlNm5fRUxyV0JGV2t6NVlnV0xKN0w1cGw3ZVI3Z2x6c1lWLVlCeHpJWUNFbFplNUFPN1g3X1dfT0pBT2E3ZWtzZnBBN3pYdw?oc=5",
-      "published": "Thu, 28 May 2026 01:32:21 GMT",
+      "title": "한울반도체, AIㆍ전장용 MLCC 후공정 장비 풀라인업…본업 회복 등 기업가치 제고 추진 - 이투데이",
+      "source": "이투데이",
+      "link": "https://news.google.com/rss/articles/CBMidEFVX3lxTE5jMmJWZ3FrSml1X05kY0VDUXNwS18ycEFLM0szM2hLWXIxS0xxVElFSGpLazZyb3dmM2RSc2FmbzBaYWxKRHFZUXF3RHVhZWxTUlpHeFpac0VCOUdoZXdOWVc0eHdJMXJ4bUUxcjltTHFRZDlL?oc=5",
+      "published": "Fri, 29 May 2026 01:33:00 GMT",
+      "terms": [
+        {
+          "term": "반도체",
+          "definition": "전자제품과 AI 서버의 핵심 부품입니다. 한국 수출과 증시에 큰 영향을 줍니다."
+        }
+      ],
+      "relative_time": "16시간 전"
+    },
+    {
+      "title": "'명목성장률 10%' 의미는?…물가·금리·양극화 관리 고차방정식 - 뉴시스",
+      "source": "뉴시스",
+      "link": "https://news.google.com/rss/articles/CBMiYEFVX3lxTFA3SV8zMVhqZy04RGh0RnlMcjJwOHR6MjVHalV5OS1HZFFyT2lRcEVUektpb1RYQ1RPMFEyVjZDQUJNelpBWDhROHB5RzdHNGpUNVhxZ0pRaVJFSHlxQ0xuRNIBeEFVX3lxTE5obDZ5Q25uSG41Q0RQeHc3ZHBmU0ozZ1NiUGVpWEtwNzJiZG9DMkZDVnBCSGVsY3Fwd0FmMVNOZjhDLUF5aFBYYnBKamlneUxYdlFuWVBUWGlVWVZVWndmd1J6U2QwV292SHVqSkdfMlhSODZoVHhfLQ?oc=5",
+      "published": "Thu, 28 May 2026 21:00:00 GMT",
+      "terms": [
+        {
+          "term": "금리",
+          "definition": "돈을 빌릴 때 내는 비용입니다. 금리가 오르면 대출 부담이 커지고 소비와 투자가 줄어들 수 있습니다."
+        },
+        {
+          "term": "물가",
+          "definition": "생활에 필요한 상품과 서비스 가격의 전반적인 수준입니다."
+        }
+      ],
+      "relative_time": "20시간 전"
+    },
+    {
+      "title": "단호한 申 \"물가·성장·환율·부동산 어딜봐도, 갈 길은 명확\" - 머니투데이 - 머니투데이",
+      "source": "머니투데이",
+      "link": "https://news.google.com/rss/articles/CBMia0FVX3lxTFBFalc0YjlZdHNNQzVHMDZpdGM2Q1haUklFZ2ktY1hySTlVb2xleUZQME02ZjZPR3ZDYXMzcjJTOXBtdHh0eFFHQ1k0OG9VYlNQZFV3cU1MOFBKQTMzOXZWQUtrR3hXS2hUaWJ30gFwQVVfeXFMT1I4RkFhV2xoZHU4NFF4emZQeEtfaFppeXcwd2dvN2Fta21oM2Uyb19fM203NWxvbWhUUEdhSWZneER3X1dNMzRkUzQ5VGtuSjBWYm1UZnIzRFJoVkJMdVhSX3dhLTBQemNkZkZ3M1NiTA?oc=5",
+      "published": "Thu, 28 May 2026 19:12:00 GMT",
+      "terms": [
+        {
+          "term": "환율",
+          "definition": "우리 돈과 외국 돈을 바꾸는 비율입니다. 원달러 환율이 오르면 수입 물가 부담이 커질 수 있습니다."
+        },
+        {
+          "term": "물가",
+          "definition": "생활에 필요한 상품과 서비스 가격의 전반적인 수준입니다."
+        }
+      ],
+      "relative_time": "22시간 전"
+    },
+    {
+      "title": "물가·환율·성장 모두 기준금리 인상 가리켜…“하반기 2회 올릴 듯” - 한겨레",
+      "source": "한겨레",
+      "link": "https://news.google.com/rss/articles/CBMickFVX3lxTFBoNjJXYUZvdmVka19LcUx1Qk9fTnpFdDIzcUZobm1WYnBZTTJlQWJIM2txMlMzZUZYck5wc2Z5MXhmQ0J2MmhuMWVrWU9hLWU5Mk5UZjdFNkZrdDhkeVBuUXJIRHYxcDV4N1Z2QUlXSUNHZw?oc=5",
+      "published": "Thu, 28 May 2026 10:36:00 GMT",
+      "terms": [
+        {
+          "term": "금리",
+          "definition": "돈을 빌릴 때 내는 비용입니다. 금리가 오르면 대출 부담이 커지고 소비와 투자가 줄어들 수 있습니다."
+        },
+        {
+          "term": "환율",
+          "definition": "우리 돈과 외국 돈을 바꾸는 비율입니다. 원달러 환율이 오르면 수입 물가 부담이 커질 수 있습니다."
+        }
+      ],
+      "relative_time": "1일 전"
+    },
+    {
+      "title": "신현송 \"물가·성장·환율 보면 갈길 명확\"… 긴축의 시간 임박 [한은, 금리 인상 예고] - 파이낸셜뉴스",
+      "source": "파이낸셜뉴스",
+      "link": "https://news.google.com/rss/articles/CBMiWkFVX3lxTE9EeXNBbVZ3aXpxQld3Z2xwZC1tbzJmV2JnUDRtdFQtWEVtVE1vRjREZ3VyWS1XdVdpOGdteHNnT2NfZnZjTkt3NkNXTUNBczduX3pid1pGUWZvUdIBXkFVX3lxTE5EVC1sckZQMW81RWR3X2Z2SlE1YUVWSUc2NXJEMEt1cEFMR19oZE9haXZrdGtGbmlUbm8zR1U5aUJPU0J6Q0JFdUtBeHc4bk16dENrYklHUHZZQ0s3WXc?oc=5",
+      "published": "Thu, 28 May 2026 09:11:37 GMT",
       "terms": [
         {
           "term": "긴축",
@@ -35,10 +112,10 @@
       "relative_time": "1일 전"
     },
     {
-      "title": "[금리동결 배경과 전망] 환율·물가 불안에도…중동 불확실성이 변수(종합) | - 연합인포맥스",
-      "source": "연합인포맥스",
-      "link": "https://news.google.com/rss/articles/CBMidEFVX3lxTE1Hc0toeHN0UmNldlhuRUlkdmNNekhZYk1qd1lPeWgwd0g1OF82N29iTTJlWG9ZRFRNUUxscjlOYklXbjJJV1l3NUlwbnlDeWxFYTZTVFpGdFphM183aWcyRzlxdzZkdi1JZlBtRUtVMnZxc1FM?oc=5",
-      "published": "Thu, 28 May 2026 05:48:27 GMT",
+      "title": "신현송 \"물가·성장·환율·부동산 방향 명확…금리인상으로 관리해야\" | - 데일리머니",
+      "source": "데일리머니",
+      "link": "https://news.google.com/rss/articles/CBMidkFVX3lxTFBqbEhjTnZsaXJkSDFHclR2dUxjbXQ3WGdtT1otVE40QzZuRzVUOU9vdlVhWHJvczFtQkZQU211TWk5OFF6TkFrMDJnTGJQaFJkSEJHQTBJOUIySVh0eC1RbVpSVU5TUUpzMV9HMTUwVDRVV3V0aHc?oc=5",
+      "published": "Thu, 28 May 2026 07:54:38 GMT",
       "terms": [
         {
           "term": "금리",
@@ -52,10 +129,10 @@
       "relative_time": "1일 전"
     },
     {
-      "title": "신현송 “물가·환율·가계부채 고려…향후 기준금리 인상 필요” - KBS 뉴스",
-      "source": "KBS 뉴스",
-      "link": "https://news.google.com/rss/articles/CBMiZkFVX3lxTE1kY3VmeE90YldZSHE4S1oxaGltY191d3lOZElQYVZ3WVFBY184Q1FrSWVzRFpuWTBwQkZRTTFDQl91Wl8tY2sycnFxODRWWnJMTlYxREx4TWI5dV9JRm1ZcTU1TkdSUQ?oc=5",
-      "published": "Thu, 28 May 2026 02:46:00 GMT",
+      "title": "신현송 한은총재 “기준금리 인상 필요…물가·환율·부동산 모두 갈길 명확” - v.daum.net",
+      "source": "v.daum.net",
+      "link": "https://news.google.com/rss/articles/CBMiVEFVX3lxTE9xZWZRSlBudmZ5R0ZpNEQwRjNoWjA0Z1VfMzJBeHZfN3loX2hvNVBpTTgzaGRMMXF6YmY3V2c1T3NQVGtLX0MwYnZwclJ5V1RyR2o0NA?oc=5",
+      "published": "Thu, 28 May 2026 07:49:02 GMT",
       "terms": [
         {
           "term": "금리",
@@ -69,18 +146,18 @@
       "relative_time": "1일 전"
     },
     {
-      "title": "한은총재 \"적절한 시기 금리 인상 필요…물가·성장 보면 명확\"(종합) - 연합뉴스",
-      "source": "연합뉴스",
-      "link": "https://news.google.com/rss/articles/CBMiYEFVX3lxTE5sV090RENvV042bTJkT09oRWg0VUhjZ1pmY1JZOWowYUF2YlF2WXB4Y3EybVBxQ0VaT2hVcWM3MlJJYW5mMUdTRjdDN0ZiUU1LVVJoa092cDdqTTl0VDlOaNIBYEFVX3lxTE5sV090RENvV042bTJkT09oRWg0VUhjZ1pmY1JZOWowYUF2YlF2WXB4Y3EybVBxQ0VaT2hVcWM3MlJJYW5mMUdTRjdDN0ZiUU1LVVJoa092cDdqTTl0VDlOaA?oc=5",
-      "published": "Thu, 28 May 2026 04:00:24 GMT",
+      "title": "신현송 한은총재 “기준금리 인상 필요…물가·환율·부동산 모두 갈길 명확” - 동아일보",
+      "source": "동아일보",
+      "link": "https://news.google.com/rss/articles/CBMidkFVX3lxTE5YZ0NLai0xZDh0NzZka1JKN0c2QzVKTjh3R1pSTUhTd3RXTElLX0hmSUlfbnhHeE5rMWxEY0VIcmhtdmFZc1RQMThaOUVaU1RVc21Iek1XaF9HTWxWSE1lcl9XcS1mRkJnMVhvTmVjZXFMcEE4bnfSAWZBVV95cUxQMHNrVENMMzhkeE45RElwbFJ4b3R0eXdqN1h3Z2FLUF95RXZlRGZ4UkNVaWxIY0NZUFFubHllRklLMUM2Qm8zWFVMY1R3UGk3d2U0V2lrUWs0NkkxUHhKOWFMa2lwSXc?oc=5",
+      "published": "Thu, 28 May 2026 07:47:00 GMT",
       "terms": [
         {
           "term": "금리",
           "definition": "돈을 빌릴 때 내는 비용입니다. 금리가 오르면 대출 부담이 커지고 소비와 투자가 줄어들 수 있습니다."
         },
         {
-          "term": "물가",
-          "definition": "생활에 필요한 상품과 서비스 가격의 전반적인 수준입니다."
+          "term": "환율",
+          "definition": "우리 돈과 외국 돈을 바꾸는 비율입니다. 원달러 환율이 오르면 수입 물가 부담이 커질 수 있습니다."
         }
       ],
       "relative_time": "1일 전"
