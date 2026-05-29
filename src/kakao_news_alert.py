@@ -274,14 +274,21 @@ def dedupe_news(items: list[NewsItem]) -> list[NewsItem]:
     return unique
 
 
-def extract_terms(items: list[NewsItem], limit: int = 2) -> list[dict[str, str]]:
-    haystack = " ".join(item.title for item in items)
+def extract_terms_from_text(text: str, limit: int = 2) -> list[dict[str, str]]:
     selected: list[dict[str, str]] = []
     for term, definition in TERM_DEFINITIONS.items():
-        if term in haystack:
+        if term in text:
             selected.append({"term": term, "definition": definition})
         if len(selected) == limit:
             return selected
+    return selected
+
+
+def extract_terms(items: list[NewsItem], limit: int = 2) -> list[dict[str, str]]:
+    haystack = " ".join(item.title for item in items)
+    selected = extract_terms_from_text(haystack, limit)
+    if len(selected) == limit:
+        return selected
 
     for term, definition in TERM_DEFINITIONS.items():
         if not any(row["term"] == term for row in selected):
@@ -329,13 +336,13 @@ def build_article_data(items: list[NewsItem]) -> dict[str, Any]:
         "generated_at": dt.datetime.now().strftime("%Y-%m-%d %H:%M"),
         "summary": "긴 기사 대신 오늘의 경제 흐름만 빠르게 확인하세요.",
         "impact": build_impact_note(items),
-        "terms": extract_terms(items),
         "items": [
             {
                 "title": item.title,
                 "source": item.source,
                 "link": item.link,
                 "published": item.published,
+                "terms": extract_terms_from_text(item.title, limit=2),
             }
             for item in items
         ],
@@ -392,27 +399,15 @@ def copy_site_assets(site_dir: Path) -> None:
 
 def render_site_html(data: dict[str, Any]) -> str:
     first_news = data["items"][0] if data["items"] else {"title": "", "link": "#", "source": ""}
-    term_buttons = "\n".join(
-        f'<a class="term-button" href="#term-{slugify(term["term"])}">{escape(term_question(term["term"]))}</a>'
-        for term in data["terms"]
-    )
     news_items = "\n".join(
         f"""
         <li class="news-item">
           <a href="{escape(item['link'])}" target="_blank" rel="noopener noreferrer">{escape(clean_title(item['title']))}</a>
           <span>{escape(item['source'])}</span>
+          {render_item_terms(item)}
         </li>
         """
         for item in data["items"]
-    )
-    term_cards = "\n".join(
-        f"""
-        <section class="term-card" id="term-{slugify(term['term'])}">
-          <h3>{escape(term_question(term['term']))}</h3>
-          <p>{escape(term['definition'])}</p>
-        </section>
-        """
-        for term in data["terms"]
     )
     return f"""<!doctype html>
 <html lang="ko">
@@ -430,6 +425,7 @@ def render_site_html(data: dict[str, Any]) -> str:
       --paper: #fffdf4;
       --green: #218a53;
       --blue: #315c9c;
+      --orange: #a85f00;
       --surface: #f7f2df;
     }}
     * {{ box-sizing: border-box; }}
@@ -549,22 +545,6 @@ def render_site_html(data: dict[str, Any]) -> str:
       margin: 0;
       color: #26362b;
     }}
-    .term-buttons {{
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-    }}
-    .term-button {{
-      min-width: 92px;
-      text-align: center;
-      background: var(--green);
-      color: white;
-      text-decoration: none;
-      border-radius: 999px;
-      padding: 9px 13px;
-      font-size: 14px;
-      font-weight: 800;
-    }}
     .section-title {{
       margin: 0 0 12px;
       font-size: 21px;
@@ -595,27 +575,27 @@ def render_site_html(data: dict[str, Any]) -> str:
       color: var(--muted);
       font-size: 13px;
     }}
-    .terms {{
-      margin-top: 24px;
+    .item-terms {{
+      margin-top: 12px;
       display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 12px;
+      gap: 8px;
     }}
-    .term-card {{
-      background: #fff;
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      padding: 18px;
+    .item-term {{
+      background: #fff9e8;
+      border: 1px solid #f0dba8;
+      border-radius: 7px;
+      padding: 11px 12px;
     }}
-    .term-card h3 {{
-      margin: 0 0 8px;
-      color: var(--blue);
-      font-size: 18px;
+    .item-term strong {{
+      display: block;
+      color: var(--orange);
+      font-size: 14px;
       letter-spacing: 0;
     }}
-    .term-card p {{
-      margin: 0;
+    .item-term p {{
+      margin: 4px 0 0;
       color: #3f4247;
+      font-size: 14px;
     }}
     .notice {{
       margin-top: 20px;
@@ -632,7 +612,6 @@ def render_site_html(data: dict[str, Any]) -> str:
       .hero {{ grid-template-columns: 1fr; }}
       .lead {{ padding: 22px; }}
       h2 {{ font-size: 28px; }}
-      .terms {{ grid-template-columns: 1fr; }}
     }}
   </style>
 </head>
@@ -663,9 +642,7 @@ def render_site_html(data: dict[str, Any]) -> str:
           <h3>어떤 영향이 있나요?</h3>
           <p>{escape(data['impact'])}</p>
         </div>
-        <nav class="term-buttons" aria-label="경제 용어 바로가기">
-          {term_buttons}
-        </nav>
+        <p class="notice">경제 용어 설명은 각 기사 아래에 붙여두었습니다.</p>
       </aside>
     </section>
 
@@ -676,15 +653,27 @@ def render_site_html(data: dict[str, Any]) -> str:
       </ol>
     </section>
 
-    <section class="terms" aria-label="오늘의 경제 용어">
-      {term_cards}
-    </section>
-
     <p class="notice">기사 본문을 복제하지 않고, 공개된 제목과 링크를 바탕으로 경제 흐름을 쉽게 설명합니다.</p>
   </main>
 </body>
 </html>
 """
+
+
+def render_item_terms(item: dict[str, Any]) -> str:
+    terms = item.get("terms") or []
+    if not terms:
+        return ""
+    rows = "\n".join(
+        f"""
+        <div class="item-term">
+          <strong>{escape(term_question(term['term']))}</strong>
+          <p>{escape(term['definition'])}</p>
+        </div>
+        """
+        for term in terms
+    )
+    return f'<div class="item-terms" aria-label="기사 속 경제 용어">{rows}</div>'
 
 
 def run_once(settings: Settings) -> None:
