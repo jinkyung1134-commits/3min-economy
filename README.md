@@ -132,3 +132,53 @@ python -m src.github_sync
 ## 참고
 
 `run-once`와 `business_webhook` 설정은 나중에 비즈메시지 API 또는 발송 대행사 API가 생겼을 때를 위한 확장 지점입니다. 지금은 카카오톡 채널용 `export-briefing`과 웹페이지용 `export-site` 위주로 쓰면 됩니다.
+
+## 카카오톡 자동 발송 연결
+
+GitHub Actions에 `.github/workflows/kakao-daily.yml`을 추가했습니다. 이 워크플로우는 매일 오전 7시(KST)에 `python -m src.kakao_news_alert run-once`를 실행해 최신 경제 뉴스 브리핑을 발송 모듈로 넘깁니다.
+
+중요한 점은 카카오 디벨로퍼스의 일반 카카오톡 메시지 API만으로는 카카오톡 채널을 추가한 전체 친구에게 자동 발송하는 용도로 쓰기 어렵다는 점입니다. 채널 친구에게 정기 브리핑을 보내려면 보통 아래 방식 중 하나를 선택해야 합니다.
+
+1. 카카오톡 채널 관리자센터에서 채널 메시지를 예약/발송
+2. 카카오 비즈메시지의 친구톡/브랜드 메시지 발송 솔루션 사용
+3. 비즈메시지 공식 대행사 또는 발송 플랫폼 API 사용
+
+이 프로젝트는 2번 또는 3번을 붙일 수 있도록 `SENDER_MODE=business_broadcast_webhook` 방식을 준비해 두었습니다. 발송사가 정해지면 GitHub 저장소의 `Settings > Secrets and variables > Actions`에 아래 값을 넣습니다.
+
+```text
+BUSINESS_MESSAGE_WEBHOOK_URL=발송사에서 제공한 API URL
+BUSINESS_MESSAGE_API_KEY=발송사 API 키
+```
+
+이 모드는 발송사에 아래 형태의 데이터를 한 번 보냅니다. 실제 필드명은 선택한 발송사 API 규격에 맞춰 조정해야 합니다.
+
+```json
+{
+  "audience": {
+    "type": "kakao_channel_friends"
+  },
+  "message": {
+    "text": "오늘의 3분경제 브리핑",
+    "link": "https://example.com",
+    "type": "economic_news_digest"
+  }
+}
+```
+
+개별 구독자에게 직접 발송하려면 `SENDER_MODE=business_webhook`을 쓰고 `data/subscribers.json`에 수신자 정보를 운영합니다. 개인정보가 들어가므로 공개 저장소에는 실제 전화번호나 식별값을 올리지 말고, 비공개 저장소 또는 별도 DB로 분리하는 것을 권장합니다.
+
+```json
+[
+  {
+    "id": "sub_001",
+    "name": "홍길동",
+    "phone": "01012345678",
+    "kakao_channel_user_key": "",
+    "subscription_status": "active",
+    "kakao_opt_in": true,
+    "plan": "free"
+  }
+]
+```
+
+유료 전환 전에는 광고성 정보 수신동의, 수신거부, 해지, 환불, 개인정보 보관 기간을 반드시 정리해야 합니다.
