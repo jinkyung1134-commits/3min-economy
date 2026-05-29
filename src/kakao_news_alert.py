@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import datetime as dt
+import email.utils
 import html
 import json
 import os
@@ -51,6 +52,7 @@ class Settings:
     sent_file: Path
     briefing_output_file: Path
     site_dir: Path
+    max_news_age_hours: int
 
 
 @dataclass(frozen=True)
@@ -139,6 +141,7 @@ def get_settings() -> Settings:
         sent_file=Path(os.getenv("SENT_FILE", ".state/sent_items.json")),
         briefing_output_file=Path(os.getenv("BRIEFING_OUTPUT_FILE", "output/kakao_briefing.txt")),
         site_dir=Path(os.getenv("SITE_DIR", "site")),
+        max_news_age_hours=int(os.getenv("MAX_NEWS_AGE_HOURS", "24")),
     )
 
 
@@ -249,7 +252,8 @@ def fetch_news(settings: Settings) -> list[NewsItem]:
         except Exception as error:
             print(f"RSS fetch failed: {feed_url} ({error})", file=sys.stderr)
 
-    return dedupe_news(filter_news(all_items, settings.news_keywords))
+    filtered = filter_recent_news(all_items, settings.max_news_age_hours)
+    return dedupe_news(filter_news(filtered, settings.news_keywords))
 
 
 def filter_news(items: list[NewsItem], keywords: list[str]) -> list[NewsItem]:
@@ -272,6 +276,25 @@ def dedupe_news(items: list[NewsItem]) -> list[NewsItem]:
         seen.add(item.link)
         unique.append(item)
     return unique
+
+
+def filter_recent_news(items: list[NewsItem], max_age_hours: int) -> list[NewsItem]:
+    if max_age_hours <= 0:
+        return items
+
+    now = now_utc()
+    recent: list[NewsItem] = []
+    unknown_date: list[NewsItem] = []
+    for item in items:
+        published_at = parse_datetime(item.published)
+        if published_at is None:
+            unknown_date.append(item)
+            continue
+        age = now - published_at
+        if dt.timedelta(0) <= age <= dt.timedelta(hours=max_age_hours):
+            recent.append(item)
+
+    return recent or unknown_date
 
 
 def extract_terms_from_text(text: str, limit: int = 2) -> list[dict[str, str]]:
@@ -343,6 +366,7 @@ def build_article_data(items: list[NewsItem]) -> dict[str, Any]:
                 "link": item.link,
                 "published": item.published,
                 "terms": extract_terms_from_text(item.title, limit=2),
+                "relative_time": relative_time(item.published),
             }
             for item in items
         ],
@@ -402,8 +426,8 @@ def render_site_html(data: dict[str, Any]) -> str:
     news_items = "\n".join(
         f"""
         <li class="news-item">
-          <a href="{escape(item['link'])}" target="_blank" rel="noopener noreferrer">{render_title_with_tooltips(clean_title(item['title']), item.get('terms') or [])}</a>
-          <span>{escape(item['source'])}</span>
+          <a class="{tooltip_class(item)}" href="{escape(item['link'])}" target="_blank" rel="noopener noreferrer" {tooltip_attrs(item)}>{escape(clean_title(item['title']))}</a>
+          <span>{escape(item['source'])} · {escape(item.get('relative_time') or '시간 미상')}</span>
         </li>
         """
         for item in data["items"]
@@ -574,20 +598,16 @@ def render_site_html(data: dict[str, Any]) -> str:
       color: var(--muted);
       font-size: 13px;
     }}
-    .term-tooltip {{
+    .has-title-tooltip {{
       position: relative;
-      display: inline-block;
-      color: var(--orange);
-      border-bottom: 2px dotted rgba(168, 95, 0, 0.65);
-      cursor: help;
+      outline: none;
     }}
-    .term-tooltip::after {{
+    .has-title-tooltip::after {{
       content: attr(data-definition);
       position: absolute;
-      left: 50%;
+      left: 0;
       bottom: calc(100% + 10px);
-      transform: translateX(-50%);
-      width: min(280px, 80vw);
+      width: min(340px, 82vw);
       padding: 11px 12px;
       border-radius: 8px;
       background: #1f2328;
@@ -601,12 +621,11 @@ def render_site_html(data: dict[str, Any]) -> str:
       visibility: hidden;
       z-index: 10;
     }}
-    .term-tooltip::before {{
+    .has-title-tooltip::before {{
       content: "";
       position: absolute;
-      left: 50%;
+      left: 20px;
       bottom: calc(100% + 3px);
-      transform: translateX(-50%);
       border: 7px solid transparent;
       border-top-color: #1f2328;
       opacity: 0;
@@ -614,10 +633,10 @@ def render_site_html(data: dict[str, Any]) -> str:
       visibility: hidden;
       z-index: 11;
     }}
-    .term-tooltip:hover::after,
-    .term-tooltip:hover::before,
-    .term-tooltip:focus::after,
-    .term-tooltip:focus::before {{
+    .has-title-tooltip:hover::after,
+    .has-title-tooltip:hover::before,
+    .has-title-tooltip:focus::after,
+    .has-title-tooltip:focus::before {{
       opacity: 1;
       visibility: visible;
     }}
@@ -666,7 +685,7 @@ def render_site_html(data: dict[str, Any]) -> str:
           <h3>어떤 영향이 있나요?</h3>
           <p>{escape(data['impact'])}</p>
         </div>
-        <p class="notice">기사 제목의 강조된 경제 용어에 마우스를 올리면 쉬운 설명이 나옵니다.</p>
+        <p class="notice">경제 용어가 포함된 기사 제목에 마우스를 올리면 쉬운 설명이 나옵니다.</p>
       </aside>
     </section>
 
@@ -684,31 +703,16 @@ def render_site_html(data: dict[str, Any]) -> str:
 """
 
 
-def render_title_with_tooltips(title: str, terms: list[dict[str, str]]) -> str:
+def tooltip_class(item: dict[str, Any]) -> str:
+    return "has-title-tooltip" if item.get("terms") else ""
+
+
+def tooltip_attrs(item: dict[str, Any]) -> str:
+    terms = item.get("terms") or []
     if not terms:
-        return escape(title)
-
-    pieces: list[str] = []
-    cursor = 0
-    matches: list[tuple[int, int, dict[str, str]]] = []
-    for term in terms:
-        start = title.find(term["term"])
-        if start >= 0:
-            matches.append((start, start + len(term["term"]), term))
-    matches.sort(key=lambda row: row[0])
-
-    for start, end, term in matches:
-        if start < cursor:
-            continue
-        pieces.append(escape(title[cursor:start]))
-        pieces.append(
-            '<span class="term-tooltip" tabindex="0" '
-            f'data-definition="{escape(term["definition"])}">'
-            f'{escape(title[start:end])}</span>'
-        )
-        cursor = end
-    pieces.append(escape(title[cursor:]))
-    return "".join(pieces)
+        return ""
+    definitions = " / ".join(f"{term['term']}: {term['definition']}" for term in terms)
+    return f'tabindex="0" data-definition="{escape(definitions)}"'
 
 
 def run_once(settings: Settings) -> None:
@@ -737,6 +741,39 @@ def clean_title(title: str) -> str:
     if " - " in title:
         return title.rsplit(" - ", 1)[0].strip()
     return title
+
+
+def parse_datetime(value: str) -> dt.datetime | None:
+    if not value:
+        return None
+    try:
+        parsed = email.utils.parsedate_to_datetime(value)
+    except (TypeError, ValueError):
+        return None
+    if parsed.tzinfo is None:
+        return parsed.replace(tzinfo=dt.timezone.utc)
+    return parsed.astimezone(dt.timezone.utc)
+
+
+def now_utc() -> dt.datetime:
+    return dt.datetime.now(dt.timezone.utc)
+
+
+def relative_time(value: str) -> str:
+    published_at = parse_datetime(value)
+    if published_at is None:
+        return "시간 미상"
+    seconds = max(0, int((now_utc() - published_at).total_seconds()))
+    if seconds < 60:
+        return f"{seconds}초 전"
+    minutes = seconds // 60
+    if minutes < 60:
+        return f"{minutes}분 전"
+    hours = minutes // 60
+    if hours < 24:
+        return f"{hours}시간 전"
+    days = hours // 24
+    return f"{days}일 전"
 
 
 def escape(value: str) -> str:
