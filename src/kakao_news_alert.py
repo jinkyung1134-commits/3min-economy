@@ -141,7 +141,7 @@ def get_settings() -> Settings:
         sent_file=Path(os.getenv("SENT_FILE", ".state/sent_items.json")),
         briefing_output_file=Path(os.getenv("BRIEFING_OUTPUT_FILE", "output/kakao_briefing.txt")),
         site_dir=Path(os.getenv("SITE_DIR", "site")),
-        max_news_age_hours=int(os.getenv("MAX_NEWS_AGE_HOURS", "24")),
+        max_news_age_hours=int(os.getenv("MAX_NEWS_AGE_HOURS", "48")),
     )
 
 
@@ -426,7 +426,7 @@ def render_site_html(data: dict[str, Any]) -> str:
     news_items = "\n".join(
         f"""
         <li class="news-item">
-          <a class="{tooltip_class(item)}" href="{escape(item['link'])}" target="_blank" rel="noopener noreferrer" {tooltip_attrs(item)}>{escape(clean_title(item['title']))}</a>
+          <a href="{escape(item['link'])}" target="_blank" rel="noopener noreferrer">{render_title_with_term_tooltips(clean_title(item['title']), item.get('terms') or [])}</a>
           <span>{escape(item['source'])} · {escape(item.get('relative_time') or '시간 미상')}</span>
         </li>
         """
@@ -598,16 +598,21 @@ def render_site_html(data: dict[str, Any]) -> str:
       color: var(--muted);
       font-size: 13px;
     }}
-    .has-title-tooltip {{
+    .term-tooltip {{
       position: relative;
+      display: inline-block;
+      color: var(--orange);
+      border-bottom: 2px dotted rgba(168, 95, 0, 0.65);
+      cursor: help;
       outline: none;
     }}
-    .has-title-tooltip::after {{
+    .term-tooltip::after {{
       content: attr(data-definition);
       position: absolute;
-      left: 0;
+      left: 50%;
       bottom: calc(100% + 10px);
-      width: min(340px, 82vw);
+      transform: translateX(-50%);
+      width: min(320px, 82vw);
       padding: 11px 12px;
       border-radius: 8px;
       background: #1f2328;
@@ -621,11 +626,12 @@ def render_site_html(data: dict[str, Any]) -> str:
       visibility: hidden;
       z-index: 10;
     }}
-    .has-title-tooltip::before {{
+    .term-tooltip::before {{
       content: "";
       position: absolute;
-      left: 20px;
+      left: 50%;
       bottom: calc(100% + 3px);
+      transform: translateX(-50%);
       border: 7px solid transparent;
       border-top-color: #1f2328;
       opacity: 0;
@@ -633,10 +639,10 @@ def render_site_html(data: dict[str, Any]) -> str:
       visibility: hidden;
       z-index: 11;
     }}
-    .has-title-tooltip:hover::after,
-    .has-title-tooltip:hover::before,
-    .has-title-tooltip:focus::after,
-    .has-title-tooltip:focus::before {{
+    .term-tooltip:hover::after,
+    .term-tooltip:hover::before,
+    .term-tooltip:focus::after,
+    .term-tooltip:focus::before {{
       opacity: 1;
       visibility: visible;
     }}
@@ -685,7 +691,7 @@ def render_site_html(data: dict[str, Any]) -> str:
           <h3>어떤 영향이 있나요?</h3>
           <p>{escape(data['impact'])}</p>
         </div>
-        <p class="notice">경제 용어가 포함된 기사 제목에 마우스를 올리면 쉬운 설명이 나옵니다.</p>
+        <p class="notice">기사 제목에서 강조된 경제 용어에 마우스를 올리면 쉬운 설명이 나옵니다.</p>
       </aside>
     </section>
 
@@ -703,16 +709,31 @@ def render_site_html(data: dict[str, Any]) -> str:
 """
 
 
-def tooltip_class(item: dict[str, Any]) -> str:
-    return "has-title-tooltip" if item.get("terms") else ""
-
-
-def tooltip_attrs(item: dict[str, Any]) -> str:
-    terms = item.get("terms") or []
+def render_title_with_term_tooltips(title: str, terms: list[dict[str, str]]) -> str:
     if not terms:
-        return ""
-    definitions = " / ".join(f"{term['term']}: {term['definition']}" for term in terms)
-    return f'tabindex="0" data-definition="{escape(definitions)}"'
+        return escape(title)
+
+    pieces: list[str] = []
+    cursor = 0
+    matches: list[tuple[int, int, dict[str, str]]] = []
+    for term in terms:
+        start = title.find(term["term"])
+        if start >= 0:
+            matches.append((start, start + len(term["term"]), term))
+    matches.sort(key=lambda row: row[0])
+
+    for start, end, term in matches:
+        if start < cursor:
+            continue
+        pieces.append(escape(title[cursor:start]))
+        pieces.append(
+            '<span class="term-tooltip" tabindex="0" '
+            f'data-definition="{escape(term["definition"])}">'
+            f'{escape(title[start:end])}</span>'
+        )
+        cursor = end
+    pieces.append(escape(title[cursor:]))
+    return "".join(pieces)
 
 
 def run_once(settings: Settings) -> None:
