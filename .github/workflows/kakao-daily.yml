@@ -1,0 +1,28 @@
+name: Send Kakao Daily Briefing
+
+on:
+  workflow_dispatch:
+  schedule:
+    # 07:00 KST. GitHub schedules use UTC and may be delayed by a few minutes.
+    - cron: "0 22 * * *"
+
+jobs:
+  send:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      SENDER_MODE: business_broadcast_webhook
+      BUSINESS_MESSAGE_WEBHOOK_URL: ${{ secrets.BUSINESS_MESSAGE_WEBHOOK_URL }}
+      BUSINESS_MESSAGE_API_KEY: ${{ secrets.BUSINESS_MESSAGE_API_KEY }}
+      SENT_FILE: .state/sent_items.json
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Send daily briefing
+        run: python -m src.kakao_news_alert run-once
