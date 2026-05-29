@@ -2,9 +2,12 @@ name: Publish 3min Economy Site
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - main
   schedule:
-    # 07:00 Asia/Seoul every day.
-    - cron: "0 22 * * *"
+    # Near-real-time site refresh. GitHub schedules are UTC and may be delayed.
+    - cron: "*/15 * * * *"
 
 permissions:
   contents: read
