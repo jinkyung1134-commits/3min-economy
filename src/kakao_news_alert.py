@@ -224,9 +224,14 @@ def parse_rss(xml_text: str, fallback_source: str) -> list[NewsItem]:
         link = html.unescape((item.findtext("link") or "").strip())
         published = (item.findtext("pubDate") or "").strip()
         source = fallback_source
-        source_node = item.find("{http://news.google.com/rss}source")
-        if source_node is not None and source_node.text:
+        source_node = item.find("{http://search.yahoo.com/mrss/}source")
+        google_source_node = item.find("{http://news.google.com/rss}source")
+        if google_source_node is not None and google_source_node.text:
+            source = google_source_node.text.strip()
+        elif source_node is not None and source_node.text:
             source = source_node.text.strip()
+        elif " - " in title:
+            source = title.rsplit(" - ", 1)[-1].strip()
         if title and link:
             items.append(NewsItem(title=title, link=link, source=source, published=published))
     return items
@@ -299,6 +304,7 @@ def build_impact_note(items: list[NewsItem]) -> str:
 
 def build_digest(items: list[NewsItem]) -> tuple[str, str]:
     now = dt.datetime.now().strftime("%Y-%m-%d %H:%M")
+    terms = extract_terms(items)
     lines = [f"[오늘의 3분경제] {now}", ""]
     lines.append("꼭 봐야 할 경제 뉴스만 짧게 정리했습니다.")
     lines.append("")
@@ -309,7 +315,6 @@ def build_digest(items: list[NewsItem]) -> tuple[str, str]:
     lines.append("영향:")
     lines.append(build_impact_note(items))
     lines.append("")
-    terms = extract_terms(items)
     lines.append("오늘의 용어:")
     for term in terms:
         lines.append(f"- {term['term']}: {term['definition']}")
@@ -322,7 +327,7 @@ def build_article_data(items: list[NewsItem]) -> dict[str, Any]:
     return {
         "title": "오늘의 3분경제",
         "generated_at": dt.datetime.now().strftime("%Y-%m-%d %H:%M"),
-        "summary": "꼭 봐야 할 경제 뉴스만 짧게 정리했습니다.",
+        "summary": "긴 기사 대신 오늘의 경제 흐름만 빠르게 확인하세요.",
         "impact": build_impact_note(items),
         "terms": extract_terms(items),
         "items": [
@@ -386,6 +391,7 @@ def copy_site_assets(site_dir: Path) -> None:
 
 
 def render_site_html(data: dict[str, Any]) -> str:
+    first_news = data["items"][0] if data["items"] else {"title": "", "link": "#", "source": ""}
     term_buttons = "\n".join(
         f'<a class="term-button" href="#term-{slugify(term["term"])}">{escape(term_question(term["term"]))}</a>'
         for term in data["terms"]
@@ -393,7 +399,7 @@ def render_site_html(data: dict[str, Any]) -> str:
     news_items = "\n".join(
         f"""
         <li class="news-item">
-          <a href="{escape(item['link'])}" target="_blank" rel="noopener noreferrer">{escape(item['title'])}</a>
+          <a href="{escape(item['link'])}" target="_blank" rel="noopener noreferrer">{escape(clean_title(item['title']))}</a>
           <span>{escape(item['source'])}</span>
         </li>
         """
@@ -402,7 +408,7 @@ def render_site_html(data: dict[str, Any]) -> str:
     term_cards = "\n".join(
         f"""
         <section class="term-card" id="term-{slugify(term['term'])}">
-          <h3>{escape(term['term'])}이란?</h3>
+          <h3>{escape(term_question(term['term']))}</h3>
           <p>{escape(term['definition'])}</p>
         </section>
         """
@@ -413,75 +419,156 @@ def render_site_html(data: dict[str, Any]) -> str:
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="3분경제는 매일 꼭 봐야 할 경제 뉴스를 짧게 정리합니다.">
   <title>3분경제</title>
   <style>
     :root {{
-      --yellow: #ffdc2e;
-      --ink: #202124;
-      --muted: #6b7280;
-      --line: #e7e2cf;
-      --green: #2eb85c;
+      --yellow: #ffdb1f;
+      --ink: #1f2328;
+      --muted: #68707d;
+      --line: #e4dfcf;
       --paper: #fffdf4;
+      --green: #218a53;
+      --blue: #315c9c;
+      --surface: #f7f2df;
     }}
     * {{ box-sizing: border-box; }}
     body {{
       margin: 0;
       font-family: Arial, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
-      background: #f6f1df;
+      background: var(--surface);
       color: var(--ink);
-      line-height: 1.55;
+      line-height: 1.58;
     }}
-    header {{
-      background: var(--yellow);
-      border-bottom: 1px solid rgba(0, 0, 0, 0.12);
-    }}
+    a {{ color: inherit; }}
     .wrap {{
-      width: min(920px, calc(100% - 32px));
+      width: min(1040px, calc(100% - 32px));
       margin: 0 auto;
     }}
+    .topbar {{
+      background: var(--yellow);
+      border-bottom: 1px solid rgba(31, 35, 40, 0.12);
+    }}
     .brand {{
+      min-height: 76px;
       display: flex;
       align-items: center;
-      gap: 14px;
-      padding: 24px 0;
+      justify-content: space-between;
+      gap: 16px;
+    }}
+    .brand-left {{
+      display: flex;
+      align-items: center;
+      gap: 13px;
+      min-width: 0;
     }}
     .brand img {{
-      width: 58px;
-      height: 58px;
-      border-radius: 16px;
+      width: 52px;
+      height: 52px;
+      border-radius: 14px;
+      flex: 0 0 auto;
     }}
     .brand h1 {{
       margin: 0;
-      font-size: 28px;
+      font-size: 25px;
       letter-spacing: 0;
+      line-height: 1.1;
     }}
     .brand p {{
-      margin: 2px 0 0;
-      color: #3d3d3d;
-      font-size: 14px;
+      margin: 4px 0 0;
+      color: #3c3c3c;
+      font-size: 13px;
+    }}
+    .update {{
+      color: #353535;
+      font-size: 13px;
+      white-space: nowrap;
     }}
     main {{
-      padding: 28px 0 48px;
+      padding: 28px 0 54px;
     }}
-    .briefing {{
+    .hero {{
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 20px;
+      align-items: stretch;
+      margin-bottom: 22px;
+    }}
+    .lead {{
       background: var(--paper);
       border: 1px solid var(--line);
       border-radius: 8px;
-      padding: 24px;
+      padding: 28px;
     }}
-    .meta {{
-      color: var(--muted);
-      font-size: 14px;
+    .eyebrow {{
       margin: 0 0 10px;
+      color: var(--green);
+      font-weight: 800;
+      font-size: 14px;
     }}
     h2 {{
-      margin: 0 0 8px;
-      font-size: 26px;
+      margin: 0;
+      font-size: 34px;
+      line-height: 1.22;
       letter-spacing: 0;
     }}
-    .summary {{
-      margin: 0 0 20px;
-      color: #424242;
+    .lead-copy {{
+      margin: 14px 0 0;
+      color: #45484d;
+      font-size: 16px;
+    }}
+    .hero-link {{
+      display: inline-flex;
+      margin-top: 22px;
+      min-height: 42px;
+      align-items: center;
+      justify-content: center;
+      padding: 10px 16px;
+      border-radius: 6px;
+      background: var(--ink);
+      color: white;
+      text-decoration: none;
+      font-weight: 800;
+    }}
+    .impact-panel {{
+      background: #f3fff5;
+      border: 1px solid #bfdfc6;
+      border-radius: 8px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 18px;
+    }}
+    .impact-panel h3 {{
+      margin: 0 0 8px;
+      font-size: 20px;
+      letter-spacing: 0;
+    }}
+    .impact-panel p {{
+      margin: 0;
+      color: #26362b;
+    }}
+    .term-buttons {{
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }}
+    .term-button {{
+      min-width: 92px;
+      text-align: center;
+      background: var(--green);
+      color: white;
+      text-decoration: none;
+      border-radius: 999px;
+      padding: 9px 13px;
+      font-size: 14px;
+      font-weight: 800;
+    }}
+    .section-title {{
+      margin: 0 0 12px;
+      font-size: 21px;
+      letter-spacing: 0;
     }}
     .news-list {{
       list-style: none;
@@ -491,109 +578,109 @@ def render_site_html(data: dict[str, Any]) -> str:
       gap: 10px;
     }}
     .news-item {{
-      padding: 14px 0;
-      border-top: 1px solid var(--line);
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 15px 16px;
     }}
     .news-item a {{
       display: block;
-      color: var(--ink);
       text-decoration: none;
-      font-weight: 700;
+      font-weight: 800;
+      color: var(--ink);
     }}
     .news-item span {{
       display: block;
+      margin-top: 5px;
       color: var(--muted);
       font-size: 13px;
-      margin-top: 4px;
-    }}
-    .impact {{
-      margin-top: 22px;
-      padding: 16px;
-      border-left: 4px solid var(--green);
-      background: #f5fff7;
-      border-radius: 6px;
-    }}
-    .term-buttons {{
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin-top: 20px;
-    }}
-    .term-button {{
-      min-width: 92px;
-      text-align: center;
-      background: var(--ink);
-      color: white;
-      text-decoration: none;
-      border-radius: 999px;
-      padding: 9px 13px;
-      font-size: 14px;
-      font-weight: 700;
     }}
     .terms {{
+      margin-top: 24px;
       display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 12px;
-      margin-top: 18px;
     }}
     .term-card {{
+      background: #fff;
       border: 1px solid var(--line);
       border-radius: 8px;
-      padding: 16px;
-      background: white;
+      padding: 18px;
     }}
     .term-card h3 {{
-      margin: 0 0 6px;
+      margin: 0 0 8px;
+      color: var(--blue);
       font-size: 18px;
       letter-spacing: 0;
     }}
     .term-card p {{
       margin: 0;
-      color: #343434;
+      color: #3f4247;
     }}
-    footer {{
+    .notice {{
+      margin-top: 20px;
       color: var(--muted);
       font-size: 13px;
-      padding: 20px 0 0;
     }}
-    @media (max-width: 560px) {{
-      .brand h1 {{ font-size: 24px; }}
-      .briefing {{ padding: 18px; }}
-      h2 {{ font-size: 22px; }}
+    @media (max-width: 760px) {{
+      .brand {{
+        align-items: flex-start;
+        flex-direction: column;
+        padding: 14px 0;
+      }}
+      .update {{ white-space: normal; }}
+      .hero {{ grid-template-columns: 1fr; }}
+      .lead {{ padding: 22px; }}
+      h2 {{ font-size: 28px; }}
+      .terms {{ grid-template-columns: 1fr; }}
     }}
   </style>
 </head>
 <body>
-  <header>
+  <header class="topbar">
     <div class="wrap brand">
-      <img src="assets/kakao-channel-profile.png" alt="3분경제 로고">
-      <div>
-        <h1>3분경제</h1>
-        <p>매일 꼭 봐야 할 경제 뉴스만 짧게</p>
+      <div class="brand-left">
+        <img src="assets/kakao-channel-profile.png" alt="3분경제 로고">
+        <div>
+          <h1>3분경제</h1>
+          <p>뉴스는 짧게, 영향은 쉽게, 용어는 바로 이해되게</p>
+        </div>
       </div>
+      <div class="update">{escape(data['generated_at'])} 업데이트</div>
     </div>
   </header>
+
   <main class="wrap">
-    <article class="briefing">
-      <p class="meta">{escape(data['generated_at'])} 업데이트</p>
-      <h2>{escape(data['title'])}</h2>
-      <p class="summary">{escape(data['summary'])}</p>
+    <section class="hero">
+      <div class="lead">
+        <p class="eyebrow">오늘의 경제 흐름</p>
+        <h2>{escape(data['title'])}</h2>
+        <p class="lead-copy">{escape(data['summary'])}</p>
+        <a class="hero-link" href="{escape(first_news['link'])}" target="_blank" rel="noopener noreferrer">첫 기사 보기</a>
+      </div>
+      <aside class="impact-panel">
+        <div>
+          <h3>어떤 영향이 있나요?</h3>
+          <p>{escape(data['impact'])}</p>
+        </div>
+        <nav class="term-buttons" aria-label="경제 용어 바로가기">
+          {term_buttons}
+        </nav>
+      </aside>
+    </section>
+
+    <section aria-labelledby="news-title">
+      <h2 class="section-title" id="news-title">오늘 확인할 뉴스</h2>
       <ol class="news-list">
         {news_items}
       </ol>
-      <section class="impact">
-        <strong>어떤 영향이 있나요?</strong>
-        <p>{escape(data['impact'])}</p>
-      </section>
-      <nav class="term-buttons" aria-label="경제 용어 바로가기">
-        {term_buttons}
-      </nav>
-      <div class="terms">
-        {term_cards}
-      </div>
-    </article>
-    <footer>
-      기사 본문을 복제하지 않고, 공개된 제목과 링크를 바탕으로 경제 흐름을 쉽게 설명합니다.
-    </footer>
+    </section>
+
+    <section class="terms" aria-label="오늘의 경제 용어">
+      {term_cards}
+    </section>
+
+    <p class="notice">기사 본문을 복제하지 않고, 공개된 제목과 링크를 바탕으로 경제 흐름을 쉽게 설명합니다.</p>
   </main>
 </body>
 </html>
@@ -620,6 +707,12 @@ def run_once(settings: Settings) -> None:
 
     save_json(settings.sent_file, sorted(sent_links | {item.link for item in selected}))
     print(f"Sent digest to {len(subscribers)} active subscribers with {len(selected)} news items.")
+
+
+def clean_title(title: str) -> str:
+    if " - " in title:
+        return title.rsplit(" - ", 1)[0].strip()
+    return title
 
 
 def escape(value: str) -> str:
